@@ -35,7 +35,8 @@ interface EmailRequest {
 app.post('/send-email', (req: Request<{}, {}, EmailRequest>, res: Response) => {
   const { to, subject, text } = req.body;
 
-  const pdfPath = path.resolve(__dirname, 'lyo-lejano.pdf'); // Adjust 'your-file.pdf' to your actual file name
+  // TODO: Change this to make it less hassle?
+  const pdfPath = path.resolve(__dirname, '..', 'assets', 'lyo-lejano.pdf'); // Going up one level, then into 'assets'
 
   const mailOptions = {
     from: process.env.OUTLOOK_EMAIL,
@@ -50,7 +51,6 @@ app.post('/send-email', (req: Request<{}, {}, EmailRequest>, res: Response) => {
       },
     ],
   };
-
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       return res.status(500).json({ error: 'Failed to send email', details: error });
