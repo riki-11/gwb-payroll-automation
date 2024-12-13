@@ -1,8 +1,8 @@
 # Install dependencies
-yarn install
+`yarn install`
 
 # Run frontend
-yarn dev
+`yarn dev`
 
 # Run backend (in separate terminal)
-yarn start
+`yarn start`
