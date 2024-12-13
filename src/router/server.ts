@@ -3,6 +3,12 @@ import nodemailer from 'nodemailer';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url'; // Needed to define __dirname
+
+// Define __dirname for ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -29,11 +35,20 @@ interface EmailRequest {
 app.post('/send-email', (req: Request<{}, {}, EmailRequest>, res: Response) => {
   const { to, subject, text } = req.body;
 
+  const pdfPath = path.resolve(__dirname, 'lyo-lejano.pdf'); // Adjust 'your-file.pdf' to your actual file name
+
   const mailOptions = {
     from: process.env.OUTLOOK_EMAIL,
     to,
     subject,
     text,
+    attachments: [
+      {   
+        filename: 'lyo-lejano.pdf', // Name of the file as it will appear in the email
+        path: pdfPath, // Full path to the file
+        contentType: 'application/pdf', // Specify the MIME type for PDF
+      },
+    ],
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
