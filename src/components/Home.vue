@@ -1,133 +1,124 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import XLSX from 'xlsx';
-import * as fs from "fs";
-import { set_fs } from "xlsx";
-
-set_fs(fs);
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
 type HeaderData = { text: string; value: string }; // Header structure for Vuetify
 
-// Reactive state for the table
 const tableHeaders = ref<HeaderData[]>([]); // Array of headers
 const tableData = ref<RowData[]>([]); // Array of rows
-
-// Send Email functionality
-const sendEmail = async (email: String) => {
-  try {
-    const response = await axios.post('http://localhost:3000/send-email', {
-      to: email,
-      subject: 'Test Email',
-      text: 'This is a test email sent from Vue.js using Axios and Nodemailer on the backend!',
-    });
-
-    console.log('Email sent successfully:', response.data);
-  } catch (error) {
-    console.error('Error sending email:', error);
-  }
-};
-
-const sendPayslipEmails = async () => {
-  try {
-    // Collect all email promises
-    const emailPromises = tableData.value.map(employeeRow => {
-      const email = employeeRow['Email'];
-      if (email) {
-        console.log(`Preparing to send email to: ${email}`);
-        return sendEmail(email); // Return the promise for sending this email
-      } else {
-        console.warn('No email provided for:', employeeRow);
-        return Promise.resolve(); // Resolve immediately for rows without an email
-      }
-    });
-
-    // Wait for all email promises to resolve
-    await Promise.all(emailPromises);
-    console.log('All emails sent successfully!');
-  } catch (error) {
-    console.error('Error sending one or more emails:', error);
-  }
-};
-
+const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
 
 async function handleFileUpload(event: Event) {
-  console.log('AWESOME!')
-  const input = event.target as HTMLInputElement; // Assert the event target is an HTMLInputElement
-  const file = input?.files?.[0]; // Get the first file
-
+  const input = event.target as HTMLInputElement;
+  const file = input?.files?.[0];
   if (!file) {
     console.error('No file selected.');
     return;
   }
 
   try {
-    const arrayBuffer = await file.arrayBuffer(); 
-    // Parse workbook and automatically calculate the range depending on the values
-    const workbook = XLSX.read(arrayBuffer, {nodim: true}); 
-
-    // Parse the first sheet
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-    // Extract data as a 2D array
-    const jsonData = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1 }) as unknown[][];
-
+    const jsonData = XLSX.utils.sheet_to_json<RowData>(firstSheet, { header: 1 });
     if (jsonData.length > 0) {
-      // Extract headers from the first row
-      tableHeaders.value = jsonData[0].map(header => ({
-        text: String(header), // Ensure headers are strings
-        value: String(header), // Value keys for rows
+      tableHeaders.value = jsonData[0].map((header: any) => ({
+        text: String(header),
+        value: String(header),
       }));
+      tableHeaders.value.push({ text: 'Payslip', value: 'payslip' });
 
-      // Extract rows from the rest of the data
       tableData.value = jsonData.slice(1).map(row => {
         const rowObject: RowData = {};
         tableHeaders.value.forEach((header, index) => {
-          rowObject[header.value] = row[index] ?? ''; // Default to empty string for missing values
+          rowObject[header.value] = row[index] ?? '';
         });
         return rowObject;
       });
     }
-
-    console.log('Extracted Headers:', tableHeaders.value);
-    console.log('Extracted Data:', tableData.value);
   } catch (error) {
     console.error('Error processing file:', error);
   }
 }
 
+const handlePayslipUpload = (email: string, event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input?.files?.[0];
+  if (file) {
+    console.log(`FILE: ${file} | NAME: ${file.name}`)
+    payslipFiles.value[email] = file; // Map email to file
+
+    for (const [email, file] of Object.entries(payslipFiles.value)) {
+      console.log(`Email: ${email}, File Name: ${file.name}`);
+      console.log(`File Content:`, file); // Full file object
+    }
+
+    // Send file to server via POST request
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post('http://localhost:3000/upload', formData)
+      .then((response) => {
+        console.log(`File uploaded successfully: ${response.data}`)
+      })
+      .catch((error) => {
+        console.error(`Error uploading file: ${error}`)
+      })
+  }
+};
+
+const sendPayslipEmails = async () => {
+  try {
+    const emailPromises = tableData.value.map(async row => {
+      const email = row['Email'];
+      const payslip = payslipFiles.value[email];
+
+      if (email && payslip) {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('payslip', payslip);
+
+        await axios.post('http://localhost:3000/send-payslip', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        console.log(`Payslip sent to: ${email}`);
+      }
+    });
+
+    await Promise.all(emailPromises);
+    console.log('All payslips sent successfully!');
+  } catch (error) {
+    console.error('Error sending payslips:', error);
+  }
+};
 </script>
 
 <template>
-  <h1>Hi!</h1>
-  <h2>This is pretty cool</h2>
-  <v-container class="text-center">
-    <v-btn v-if="tableHeaders.length && tableData.length" @click="sendPayslipEmails" height="72" min-width="164">
-      Send Emails
-    </v-btn>
-    <v-btn v-else height="72" min-width="164" disabled>
-      Send Emails
-    </v-btn>
-  </v-container>
-  <v-file-input label="File input" @change="handleFileUpload"/>
+  <h1>Upload Employee Data and Payslips</h1>
   <v-container>
-    <!-- Render table if data is available -->
+    <v-file-input label="Upload XLSX File" @change="handleFileUpload" />
     <v-data-table
       v-if="tableHeaders.length && tableData.length"
       :items="tableData"
       class="elevation-1"
-      height="400"
-      
     >
+      <template v-slot:body="{ items }">
+        <tr v-for="(item, index) in items" :key="index">
+          <td v-for="header in tableHeaders" :key="header.value">
+            <span v-if="header.value !== 'payslip'">{{ item[header.value] }}</span>
+            <v-file-input
+              v-else
+              label="Upload Payslip"
+              @change="(event: Event) => handlePayslipUpload(item['Email'], event)"
+            />
+          </td>
+        </tr>
+      </template>
     </v-data-table>
-
-    <!-- Show a loader or message if no data is loaded yet -->
-    <div v-else class="text-center">
-      <v-progress-circular indeterminate color="primary" />
-      <p>Loading table data...</p>
-    </div>
+    <v-btn :disabled="!tableData.length" @click="sendPayslipEmails">Send Emails</v-btn>
   </v-container>
 </template>
-<!-- :headers="tableHeaders" -->

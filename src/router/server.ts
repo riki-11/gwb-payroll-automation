@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import multer from 'multer';
 import { fileURLToPath } from 'url'; // Needed to define __dirname
 
 // Define __dirname for ES module
@@ -18,6 +19,17 @@ const port = 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {  
+    cb(null, file.originalname);
+  }
+})
+const upload = multer({ storage });
+
 const transporter = nodemailer.createTransport({
   service: 'hotmail',
   auth: {
@@ -31,6 +43,16 @@ interface EmailRequest {
   subject: string;
   text: string;
 }
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (req.file) {
+    console.log(`File uploaded: ${req.file}`)
+    res.send('Uploaded successfully!')
+  } else {
+    res.status(400).send('No file uploaded');
+  }
+})
+
 
 app.post('/send-email', (req: Request<{}, {}, EmailRequest>, res: Response) => {
   const { to, subject, text } = req.body;
