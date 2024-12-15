@@ -11,7 +11,7 @@ const tableHeaders = ref<HeaderData[]>([]); // Array of headers
 const tableData = ref<RowData[]>([]); // Array of rows
 const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
 
-async function handleFileUpload(event: Event) {
+async function generateTableFromXLSX(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input?.files?.[0];
   if (!file) {
@@ -47,27 +47,29 @@ async function handleFileUpload(event: Event) {
 
 const handlePayslipUpload = (email: string, event: Event) => {
   const input = event.target as HTMLInputElement;
-  const file = input?.files?.[0];
-  if (file) {
-    console.log(`FILE: ${file} | NAME: ${file.name}`)
-    payslipFiles.value[email] = file; // Map email to file
 
-    for (const [email, file] of Object.entries(payslipFiles.value)) {
-      console.log(`Email: ${email}, File Name: ${file.name}`);
-      console.log(`File Content:`, file); // Full file object
-    }
-
-    // Send file to server via POST request
+  if (input && input.files && input.files[0]) {
     const formData = new FormData();
-    formData.append('file', file);
-
-    axios.post('http://localhost:3000/upload', formData)
-      .then((response) => {
-        console.log(`File uploaded successfully: ${response.data}`)
-      })
-      .catch((error) => {
-        console.error(`Error uploading file: ${error}`)
-      })
+    formData.append('file', input.files[0]);  // Append the file to FormData
+  
+    // Add the email data to the form
+    formData.append('to', email);
+    formData.append('subject', 'Sample payslip Email');
+    formData.append('text', 'Please find your payslip below.');
+  
+    axios.post('http://localhost:3000/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    .then(response => {
+      console.log('File uploaded and email sent successfully:', response.data);
+    })
+    .catch(error => {
+      console.error('Error uploading file or sending email:', error);
+    });
+  } else {
+    console.error('Input is null');
   }
 };
 
@@ -100,7 +102,7 @@ const sendPayslipEmails = async () => {
 <template>
   <h1>Upload Employee Data and Payslips</h1>
   <v-container>
-    <v-file-input label="Upload XLSX File" @change="handleFileUpload" />
+    <v-file-input label="Upload XLSX File" @change="generateTableFromXLSX" />
     <v-data-table
       v-if="tableHeaders.length && tableData.length"
       :items="tableData"
