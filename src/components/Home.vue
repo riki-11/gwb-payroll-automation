@@ -31,18 +31,27 @@ const sendEmail = async (email: String) => {
 };
 
 const sendPayslipEmails = async () => {
-  for (var employeeRow of tableData.value) {
-    console.log(employeeRow)
-    console.log(`Employee Email: ${employeeRow['Email']}`)
-    const email = employeeRow['Email']
-    
-    if (email) {
-      await sendEmail(email); // Send email to each employee
-    } else {
-      console.warn('No email provided for:', employeeRow);
-    }
+  try {
+    // Collect all email promises
+    const emailPromises = tableData.value.map(employeeRow => {
+      const email = employeeRow['Email'];
+      if (email) {
+        console.log(`Preparing to send email to: ${email}`);
+        return sendEmail(email); // Return the promise for sending this email
+      } else {
+        console.warn('No email provided for:', employeeRow);
+        return Promise.resolve(); // Resolve immediately for rows without an email
+      }
+    });
+
+    // Wait for all email promises to resolve
+    await Promise.all(emailPromises);
+    console.log('All emails sent successfully!');
+  } catch (error) {
+    console.error('Error sending one or more emails:', error);
   }
-}
+};
+
 
 async function handleFileUpload(event: Event) {
   console.log('AWESOME!')
