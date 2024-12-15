@@ -16,10 +16,10 @@ const tableHeaders = ref<HeaderData[]>([]); // Array of headers
 const tableData = ref<RowData[]>([]); // Array of rows
 
 // Send Email functionality
-const sendEmail = async () => {
+const sendEmail = async (email: String) => {
   try {
     const response = await axios.post('http://localhost:3000/send-email', {
-      to: 'lejanoenrique@gmail.com',
+      to: email,
       subject: 'Test Email',
       text: 'This is a test email sent from Vue.js using Axios and Nodemailer on the backend!',
     });
@@ -29,6 +29,20 @@ const sendEmail = async () => {
     console.error('Error sending email:', error);
   }
 };
+
+const sendPayslipEmails = async () => {
+  for (var employeeRow of tableData.value) {
+    console.log(employeeRow)
+    console.log(`Employee Email: ${employeeRow['Email']}`)
+    const email = employeeRow['Email']
+    
+    if (email) {
+      await sendEmail(email); // Send email to each employee
+    } else {
+      console.warn('No email provided for:', employeeRow);
+    }
+  }
+}
 
 async function handleFileUpload(event: Event) {
   console.log('AWESOME!')
@@ -81,8 +95,11 @@ async function handleFileUpload(event: Event) {
   <h1>Hi!</h1>
   <h2>This is pretty cool</h2>
   <v-container class="text-center">
-    <v-btn @click="sendEmail" height="72" min-width="164">
-      Send Email
+    <v-btn v-if="tableHeaders.length && tableData.length" @click="sendPayslipEmails" height="72" min-width="164">
+      Send Emails
+    </v-btn>
+    <v-btn v-else height="72" min-width="164" disabled>
+      Send Emails
     </v-btn>
   </v-container>
   <v-file-input label="File input" @change="handleFileUpload"/>
