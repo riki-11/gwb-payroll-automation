@@ -2,6 +2,10 @@
 import axios from 'axios';
 import { ref, computed, onMounted } from 'vue';
 import XLSX from 'xlsx';
+import * as fs from "fs";
+import { set_fs } from "xlsx";
+
+set_fs(fs);
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
@@ -26,44 +30,51 @@ const sendEmail = async () => {
   }
 };
 
-// SheetJS Importing
-const importSheet = async () => {
-  const url = "https://docs.sheetjs.com/PortfolioSummary.xls";
-  const file = await (await fetch(url)).arrayBuffer();
-  const workbook = XLSX.read(file);
+async function handleFileUpload(event: Event) {
+  console.log('AWESOME!')
+  const input = event.target as HTMLInputElement; // Assert the event target is an HTMLInputElement
+  const file = input?.files?.[0]; // Get the first file
 
-  // Parse the first sheet
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-
-  // Extract data as a 2D array (unknown type resolved here)
-  const jsonData = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1 }) as unknown[][];
-
-  if (jsonData.length > 0) {
-    // Extract headers from the first row
-    tableHeaders.value = jsonData[0].map(header => ({
-      text: String(header), // Ensure headers are strings
-      value: String(header), // Value keys for rows
-    }));
-
-    // Extract rows from the rest of the data
-    tableData.value = jsonData.slice(1).map(row => {
-      const rowObject: RowData = {};
-      tableHeaders.value.forEach((header, index) => {
-        rowObject[header.value] = row[index] ?? ''; // Default to empty string for missing values
-      });
-      return rowObject;
-    });
+  if (!file) {
+    console.error('No file selected.');
+    return;
   }
 
-  console.log('Extracted Headers:', tableHeaders.value);
-  console.log('Extracted Data:', tableData.value);
-};
+  try {
+    const arrayBuffer = await file.arrayBuffer(); 
+    // Parse workbook and automatically calculate the range depending on the values
+    const workbook = XLSX.read(arrayBuffer, {nodim: true}); 
 
-// Trigger SheetJS import on component mount
-onMounted(() => {
-  importSheet();
-  console.log(`The component is now mounted.`);
-});
+    // Parse the first sheet
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+    // Extract data as a 2D array
+    const jsonData = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1 }) as unknown[][];
+
+    if (jsonData.length > 0) {
+      // Extract headers from the first row
+      tableHeaders.value = jsonData[0].map(header => ({
+        text: String(header), // Ensure headers are strings
+        value: String(header), // Value keys for rows
+      }));
+
+      // Extract rows from the rest of the data
+      tableData.value = jsonData.slice(1).map(row => {
+        const rowObject: RowData = {};
+        tableHeaders.value.forEach((header, index) => {
+          rowObject[header.value] = row[index] ?? ''; // Default to empty string for missing values
+        });
+        return rowObject;
+      });
+    }
+
+    console.log('Extracted Headers:', tableHeaders.value);
+    console.log('Extracted Data:', tableData.value);
+  } catch (error) {
+    console.error('Error processing file:', error);
+  }
+}
+
 </script>
 
 <template>
@@ -74,15 +85,15 @@ onMounted(() => {
       Send Email
     </v-btn>
   </v-container>
-  
+  <v-file-input label="File input" @change="handleFileUpload"/>
   <v-container>
     <!-- Render table if data is available -->
     <v-data-table
       v-if="tableHeaders.length && tableData.length"
-      :headers="tableHeaders"
       :items="tableData"
       class="elevation-1"
       height="400"
+      
     >
     </v-data-table>
 
@@ -93,3 +104,4 @@ onMounted(() => {
     </div>
   </v-container>
 </template>
+<!-- :headers="tableHeaders" -->
