@@ -85,7 +85,7 @@ const sendPayslipToEmployee = async (email: string) => {
     // Set loading state for current email being sent
     loadingStates[email] = true;
 
-    const response = await axios.post('http://localhost:3000/upload', formData, {
+    const response = await axios.post('http://localhost:3000/send-payslip-to-email', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -106,10 +106,12 @@ const sendPayslipEmails = async () => {
 
       if (email && payslip) {
         const formData = new FormData();
-        formData.append('email', email);
-        formData.append('payslip', payslip);
+        formData.append('to', email);
+        formData.append('subject', 'Sample payslip Email');
+        formData.append('text', 'Please find your payslip below.');
+        formData.append('file', payslip);
 
-        await axios.post('http://localhost:3000/send-payslip', formData, {
+        await axios.post('http://localhost:3000/send-payslip-to-email', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         console.log(`Payslip sent to: ${email}`);
@@ -128,6 +130,7 @@ const sendPayslipEmails = async () => {
   <h1>Upload Employee Data and Payslips</h1>
   <v-container>
     <v-file-input label="Upload XLSX File" @change="generateTableFromXLSX" />
+    <v-btn :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" @click="sendPayslipEmails">Send All Payslips</v-btn>
     <v-data-table
       v-if="tableHeaders.length && tableData.length"
       :items="tableData"
@@ -163,6 +166,5 @@ const sendPayslipEmails = async () => {
         </tr>
       </template>
     </v-data-table>
-    <v-btn :disabled="!tableData.length" @click="sendPayslipEmails">Send Emails</v-btn>
   </v-container>
 </template>

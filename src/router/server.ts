@@ -36,9 +36,9 @@ interface EmailRequest {
   text: string;
 }
 
-app.post('/upload', upload.single('file'), (req: Request, res: Response) => {
+app.post('/send-payslip-to-email', upload.single('file'), (req: Request, res: Response) => {
   if (req.file) {
-    console.log(`File uploaded: ${req.file.originalname}`);
+    console.log(`File to be sent: ${req.file.originalname}`);
 
     // Prepare the email options with the uploaded file as an attachment
     const mailOptions = {
@@ -68,32 +68,6 @@ app.post('/upload', upload.single('file'), (req: Request, res: Response) => {
   }
 });
 
-app.post('/send-email', (req: Request<{}, {}, EmailRequest>, res: Response) => {
-  const { to, subject, text } = req.body;
-
-  // TODO: Change this to make it less hassle?
-  const pdfPath = path.resolve(__dirname, '..', 'assets', 'lyo-lejano.pdf'); // Going up one level, then into 'assets'
-
-  const mailOptions = {
-    from: process.env.OUTLOOK_EMAIL,
-    to,
-    subject,
-    text,
-    attachments: [
-      {   
-        filename: 'lyo-lejano.pdf', // Name of the file as it will appear in the email
-        path: pdfPath, // Full path to the file
-        contentType: 'application/pdf', // Specify the MIME type for PDF
-      },
-    ],
-  };
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      return res.status(500).json({ error: 'Failed to send email', details: error });
-    }
-    res.status(200).json({ message: 'Email sent successfully', info });
-  });
-});
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
