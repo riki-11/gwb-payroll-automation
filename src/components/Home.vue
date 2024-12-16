@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import axios from 'axios';
-import { ref, computed } from 'vue';
+import { ref, reactive } from 'vue';
 import XLSX from 'xlsx';
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
 type HeaderData = { text: string; value: string }; // Header structure for Vuetify
 
-const tableHeaders = ref<HeaderData[]>([]); // Array of headers
-const tableData = ref<RowData[]>([]); // Array of rows
+const tableHeaders = ref<HeaderData[]>([]);
+const tableData = ref<RowData[]>([]);
 const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
+const loadingStates = reactive<Record<string, boolean>>({}); // Track loading state for each email
 
 async function generateTableFromXLSX(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -81,6 +82,9 @@ const sendPayslipToEmployee = async (email: string) => {
   formData.append('file', payslip);
 
   try {
+    // Set loading state for current email being sent
+    loadingStates[email] = true;
+
     const response = await axios.post('http://localhost:3000/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -89,6 +93,8 @@ const sendPayslipToEmployee = async (email: string) => {
     console.log('File uploaded and email sent successfully:', response.data);
   } catch (error) {
     console.error('Error uploading file or sending email:', error);
+  } finally {
+    loadingStates[email] = false;
   }
 }
 
@@ -137,14 +143,22 @@ const sendPayslipEmails = async () => {
               label="Upload Payslip"
               @change="(event: Event) => assignPayslipToEmployee(item['Email'], event)"
             />
-            <!-- TODO: Disable if no file uploaded yet. -->
-            <v-btn 
-              v-else 
-              :disabled="!payslipFiles[item['Email']]"
-              @click="sendPayslipToEmployee(item['Email'])"
-            >
-              Send Email
-            </v-btn>
+            <!-- Send Email Button (or Spinner if loading) -->
+            <template v-else>
+              <v-progress-circular
+                v-if="loadingStates[item['Email']]"
+                indeterminate
+                color="primary"
+                size="24"
+              ></v-progress-circular>
+              <v-btn
+                v-else
+                :disabled="!payslipFiles[item['Email']]"
+                @click="sendPayslipToEmployee(item['Email'])"
+              >
+                Send Email
+              </v-btn>
+            </template>
           </td>
         </tr>
       </template>
