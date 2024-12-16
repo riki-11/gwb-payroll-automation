@@ -36,15 +36,6 @@ interface EmailRequest {
   text: string;
 }
 
-// app.post('/upload', upload.single('file'), (req, res) => {
-//   if (req.file) {
-//     console.log(`File uploaded: ${req.file}`)
-//     res.send('Uploaded successfully!')
-//   } else {
-//     res.status(400).send('No file uploaded');
-//   }
-// })
-
 app.post('/upload', upload.single('file'), (req: Request, res: Response) => {
   if (req.file) {
     console.log(`File uploaded: ${req.file.originalname}`);

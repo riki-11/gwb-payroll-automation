@@ -30,8 +30,13 @@ async function generateTableFromXLSX(event: Event) {
         text: String(header),
         value: String(header),
       }));
-      tableHeaders.value.push({ text: 'Payslip', value: 'payslip' });
 
+      tableHeaders.value.push(
+        { text: 'Payslip Amazing', value: 'payslip' },
+        { text: 'Send Email', value: 'send-email'}
+      );
+
+      // TODO: Investigate this section and why is it causing bugs in the headers.
       tableData.value = jsonData.slice(1).map(row => {
         const rowObject: RowData = {};
         tableHeaders.value.forEach((header, index) => {
@@ -45,33 +50,47 @@ async function generateTableFromXLSX(event: Event) {
   }
 }
 
-const handlePayslipUpload = (email: string, event: Event) => {
+const assignPayslipToEmployee = (email: string, event: Event) => {
   const input = event.target as HTMLInputElement;
 
+  // Assign the uploaded payslip to that particular email address. 
   if (input && input.files && input.files[0]) {
-    const formData = new FormData();
-    formData.append('file', input.files[0]);  // Append the file to FormData
-  
-    // Add the email data to the form
-    formData.append('to', email);
-    formData.append('subject', 'Sample payslip Email');
-    formData.append('text', 'Please find your payslip below.');
-  
-    axios.post('http://localhost:3000/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-    .then(response => {
-      console.log('File uploaded and email sent successfully:', response.data);
-    })
-    .catch(error => {
-      console.error('Error uploading file or sending email:', error);
-    });
+    // TODO: add more information within payslipFiles object.
+    const payslipFile = input.files[0]
+    payslipFiles.value[email] = payslipFile
+
+    console.log(`Payslip with filename "${payslipFile.name}" assigned to ${email}`)
   } else {
     console.error('Input is null');
   }
 };
+
+// potential bug: this only works well if it's one attachment per email.
+const sendPayslipToEmployee = async (email: string) => {
+  const payslip = payslipFiles.value[email];
+  if (!payslip) {
+    console.error(`No payslip found for email: ${email}`);
+    return;
+  }
+  const formData = new FormData();
+
+  // Add the email data to the form
+  formData.append('to', email);
+  formData.append('subject', 'Sample payslip Email');
+  formData.append('text', 'Please find your payslip below.');
+  formData.append('file', payslip);
+
+  try {
+    const response = await axios.post('http://localhost:3000/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    console.log('File uploaded and email sent successfully:', response.data);
+  } catch (error) {
+    console.error('Error uploading file or sending email:', error);
+  }
+}
 
 const sendPayslipEmails = async () => {
   try {
@@ -111,12 +130,21 @@ const sendPayslipEmails = async () => {
       <template v-slot:body="{ items }">
         <tr v-for="(item, index) in items" :key="index">
           <td v-for="header in tableHeaders" :key="header.value">
-            <span v-if="header.value !== 'payslip'">{{ item[header.value] }}</span>
+            <!-- Payslip File Input -->
+            <span v-if="header.value !== 'payslip' && header.value!== 'send-email'">{{ item[header.value] }}</span>
             <v-file-input
-              v-else
+              v-else-if="header.value === 'payslip'"
               label="Upload Payslip"
-              @change="(event: Event) => handlePayslipUpload(item['Email'], event)"
+              @change="(event: Event) => assignPayslipToEmployee(item['Email'], event)"
             />
+            <!-- TODO: Disable if no file uploaded yet. -->
+            <v-btn 
+              v-else 
+              :disabled="!payslipFiles[item['Email']]"
+              @click="sendPayslipToEmployee(item['Email'])"
+            >
+              Send Email
+            </v-btn>
           </td>
         </tr>
       </template>
