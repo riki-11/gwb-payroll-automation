@@ -4,6 +4,7 @@ import { ref, reactive } from 'vue';
 import XLSX from 'xlsx';
 
 import SendPayslipModal from './SendPayslipModal.vue';
+import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
@@ -20,7 +21,8 @@ const payslipFiles = ref<Record<string, File>>({}); // Store payslip files index
 const loadingStates = reactive<Record<string, boolean>>({}); // Track loading state for each email
 
 // Dialog states
-const payslipDialog = ref(false);
+const sendPayslipDialog = ref(false);
+const sendAllPayslipsDialog = ref(false);
 const selectedRowForDialog = ref<RowData | null>(null);
 
 async function generateTableFromXLSX(event: Event) {
@@ -77,11 +79,6 @@ const assignPayslipToEmployee = (email: string, event: Event) => {
   }
 };
 
-const openDialogForRow = (row: RowData) => {
-  selectedRowForDialog.value = row;
-  payslipDialog.value = true;
-}
-
 // potential bug: this only works well if it's one attachment per email.
 const sendPayslipToEmployee = async (email: string) => {
   const payslip = payslipFiles.value[email];
@@ -114,7 +111,7 @@ const sendPayslipToEmployee = async (email: string) => {
   }
 }
 
-const sendPayslipEmails = async () => {
+const sendAllPayslips = async () => {
   try {
     const emailPromises = tableData.value.map(async row => {
       const email = row['Email'];
@@ -140,17 +137,29 @@ const sendPayslipEmails = async () => {
     console.error('Error sending payslips:', error);
   }
 };
+
+// Dialog event functions
+const openSendPayslipDialog = (row: RowData) => {
+  selectedRowForDialog.value = row;
+  sendPayslipDialog.value = true;
+}
+
+const openSendAllPayslipsDialog = () => {
+  sendAllPayslipsDialog.value = true;
+}
 </script>
 
 <template>
   <h1>Upload Employee Data and Payslips</h1>
   <v-container>
     <v-file-input label="Upload XLSX File" @change="generateTableFromXLSX" />
+    <!-- TODO: Upon confirming sending all payslips. Show loading indicators for all rows accordingly. -->
     <v-btn 
       text="Send All Payslips"
       :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
-      @click="sendPayslipEmails"
+      @click="openSendAllPayslipsDialog"
     ></v-btn>
+    <!-- TODO: Turn table into component. -->
     <v-data-table
       v-if="tableHeaders.length && tableData.length"
       :items="tableData"
@@ -184,7 +193,7 @@ const sendPayslipEmails = async () => {
                 v-else
                 text="Send"
                 :disabled="!payslipFiles[item['Email']]"
-                @click="openDialogForRow(item)"
+                @click="openSendPayslipDialog(item)"
               ></v-btn>
             </template>
           </td>
@@ -196,10 +205,15 @@ const sendPayslipEmails = async () => {
   <!-- Send Payslip Dialog -->
   <SendPayslipModal
     :payslipFiles="payslipFiles"
-    :payslipDialog="payslipDialog"
+    :dialog="sendPayslipDialog"
     :rowData="selectedRowForDialog"
     :sendPayslipToEmployee="sendPayslipToEmployee"
-    @update:dialog="payslipDialog = $event"
+    @update:dialog="sendPayslipDialog = $event"
+  />
+  <SendAllPayslipsModal
+    :dialog="sendAllPayslipsDialog"
+    :sendAllPayslips="sendAllPayslips"
+    @update:dialog="sendAllPayslipsDialog = $event"
   />
 
 </template>

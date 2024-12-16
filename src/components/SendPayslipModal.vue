@@ -6,7 +6,7 @@ const props = defineProps({
     type: Object as () => Record<string, File> | null,
     required: true
   },
-  payslipDialog: {
+  dialog: {
     type: Boolean,
     required: true,
   },
@@ -55,7 +55,7 @@ const handleSendPayslipToEmployee = () => {
 
 <template>
    <!-- Shared Dialog -->
-   <v-dialog v-model="props.payslipDialog" width="auto">
+   <v-dialog v-model="props.dialog" width="auto">
     <v-card>
       <v-card-title>Proceed with sending payslip?</v-card-title>
       <v-card-text>
