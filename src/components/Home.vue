@@ -3,14 +3,25 @@ import axios from 'axios';
 import { ref, reactive } from 'vue';
 import XLSX from 'xlsx';
 
+import SendPayslipModal from './SendPayslipModal.vue';
+
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
 type HeaderData = { text: string; value: string }; // Header structure for Vuetify
 
+// Table variables
 const tableHeaders = ref<HeaderData[]>([]);
 const tableData = ref<RowData[]>([]);
+
+// Payslip variables
 const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
+
+// Button states
 const loadingStates = reactive<Record<string, boolean>>({}); // Track loading state for each email
+
+// Dialog states
+const payslipDialog = ref(false);
+const selectedRowForDialog = ref<RowData | null>(null);
 
 async function generateTableFromXLSX(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -65,6 +76,11 @@ const assignPayslipToEmployee = (email: string, event: Event) => {
     console.error('Input is null');
   }
 };
+
+const openDialogForRow = (row: RowData) => {
+  selectedRowForDialog.value = row;
+  payslipDialog.value = true;
+}
 
 // potential bug: this only works well if it's one attachment per email.
 const sendPayslipToEmployee = async (email: string) => {
@@ -130,7 +146,11 @@ const sendPayslipEmails = async () => {
   <h1>Upload Employee Data and Payslips</h1>
   <v-container>
     <v-file-input label="Upload XLSX File" @change="generateTableFromXLSX" />
-    <v-btn :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" @click="sendPayslipEmails">Send All Payslips</v-btn>
+    <v-btn 
+      text="Send All Payslips"
+      :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
+      @click="sendPayslipEmails"
+    ></v-btn>
     <v-data-table
       v-if="tableHeaders.length && tableData.length"
       :items="tableData"
@@ -139,14 +159,20 @@ const sendPayslipEmails = async () => {
       <template v-slot:body="{ items }">
         <tr v-for="(item, index) in items" :key="index">
           <td v-for="header in tableHeaders" :key="header.value">
+            <!-- Table Data -->
+            <span 
+              v-if="header.value !== 'payslip' && header.value!== 'send-email'"
+            >
+              {{ item[header.value] }}
+            </span>
             <!-- Payslip File Input -->
-            <span v-if="header.value !== 'payslip' && header.value!== 'send-email'">{{ item[header.value] }}</span>
             <v-file-input
               v-else-if="header.value === 'payslip'"
               label="Upload Payslip"
               @change="(event: Event) => assignPayslipToEmployee(item['Email'], event)"
             />
             <!-- Send Email Button (or Spinner if loading) -->
+            <!-- TODO: Turn this into a component -->
             <template v-else>
               <v-progress-circular
                 v-if="loadingStates[item['Email']]"
@@ -156,15 +182,24 @@ const sendPayslipEmails = async () => {
               ></v-progress-circular>
               <v-btn
                 v-else
+                text="Send"
                 :disabled="!payslipFiles[item['Email']]"
-                @click="sendPayslipToEmployee(item['Email'])"
-              >
-                Send Email
-              </v-btn>
+                @click="openDialogForRow(item)"
+              ></v-btn>
             </template>
           </td>
         </tr>
       </template>
     </v-data-table>
   </v-container>
+
+  <!-- Send Payslip Dialog -->
+  <SendPayslipModal
+    :payslipFiles="payslipFiles"
+    :payslipDialog="payslipDialog"
+    :rowData="selectedRowForDialog"
+    :sendPayslipToEmployee="sendPayslipToEmployee"
+    @update:dialog="payslipDialog = $event"
+  />
+
 </template>
