@@ -4,6 +4,7 @@ import XLSX from 'xlsx';
 
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
+import EmailBodyEditor from './EmailBodyEditor.vue';
 
 
 // Define types for rows and headers
@@ -13,6 +14,7 @@ type HeaderData = { text: string; value: string }; // Header structure for Vueti
 // Table variables
 const tableHeaders = ref<HeaderData[]>([]);
 const tableData = ref<RowData[]>([]);
+const emailBodyContent = ref<string>('');
 
 async function generateTableFromXLSX(event: Event) {
   const input = event.target as HTMLInputElement;
@@ -59,11 +61,19 @@ async function generateTableFromXLSX(event: Event) {
   <h1>Upload Employee Data and Payslips</h1>
   <v-container>
     <!-- TODO: Limit file input to XLSX (and maybe CSV) -->
-    <v-file-input label="Upload XLSX File" @change="generateTableFromXLSX" />
+    <v-file-input 
+      label="Upload XLSX File" 
+      @change="generateTableFromXLSX" 
+    />
     <EmployeeDataTable
       v-if="tableHeaders.length && tableData.length"
       :table-headers="tableHeaders"
       :table-data="tableData"
+      :email-body-content="emailBodyContent"
+    />
+    <EmailBodyEditor 
+      v-if="tableHeaders.length && tableData.length"
+      v-model="emailBodyContent"
     />
   </v-container>
 </template>

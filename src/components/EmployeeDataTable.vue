@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, defineProps } from 'vue';
+import { ref, reactive} from 'vue';
 import axios from 'axios';
 
 // Components
@@ -19,6 +19,10 @@ const props = defineProps({
     type: Array as () => RowData[],
     required: true,
   },
+  emailBodyContent: {
+    type: String,
+    required: true
+  }
 });
 
 // Payslip variables
@@ -60,7 +64,7 @@ const sendPayslipToEmployee = async (email: string) => {
   // Add the email data to the form
   formData.append('to', email);
   formData.append('subject', 'Sample payslip Email');
-  formData.append('text', 'Please find your payslip below.');
+  formData.append('text', props.emailBodyContent);
   formData.append('file', payslip);
 
   try {
@@ -90,7 +94,7 @@ const sendAllPayslips = async () => {
         const formData = new FormData();
         formData.append('to', email);
         formData.append('subject', 'Sample payslip Email');
-        formData.append('text', 'Please find your payslip below.');
+        formData.append('text', props.emailBodyContent);
         formData.append('file', payslip);
 
         await axios.post('http://localhost:3000/send-payslip-to-email', formData, {
@@ -121,11 +125,7 @@ const openSendAllPayslipsDialog = () => {
 
 <template>
   <!-- TODO: Upon confirming sending all payslips. Show loading indicators for all rows accordingly. -->
-  <v-btn 
-    text="Send All Payslips"
-    :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
-    @click="openSendAllPayslipsDialog"
-  />
+
   <v-data-table :items="props.tableData" class="elevation-1">
     <template v-slot:body="{ items }">
       <tr v-for="(item, index) in items" :key="index">
@@ -159,6 +159,12 @@ const openSendAllPayslipsDialog = () => {
       </tr>
     </template>
   </v-data-table>
+
+  <v-btn 
+    text="Send All Payslips"
+    :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
+    @click="openSendAllPayslipsDialog"
+  />
 
   <!-- Send Payslip Dialog -->
   <SendPayslipModal
