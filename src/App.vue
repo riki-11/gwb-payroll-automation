@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
 import Home from './components/Home.vue'
+import NavigationBar from './components/NavigationBar.vue';
+import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  <Home></Home>
+  <v-app>
+    <NavigationBar/>
+    <v-main>
+      <v-container>
+        <RouterView />
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <style scoped>
