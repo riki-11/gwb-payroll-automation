@@ -5,6 +5,7 @@ import XLSX from 'xlsx';
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
 import EmailBodyEditor from './EmailBodyEditor.vue';
+import EmailPayslipsInstructions from './EmailPayslipsInstructions.vue';
 
 
 // Define types for rows and headers
@@ -58,13 +59,16 @@ async function generateTableFromXLSX(event: Event) {
 </script>
 
 <template>
-  <h1>Upload Employee Data and Payslips</h1>
-  <v-container>
+  <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
+  <v-container class="d-flex flex-column align-start">
     <!-- TODO: Limit file input to XLSX (and maybe CSV) -->
-    <v-file-input 
-      label="Upload XLSX File" 
-      @change="generateTableFromXLSX" 
-    />
+    <EmailPayslipsInstructions/>
+    <v-container class="w-100">
+      <v-file-input 
+        label="Upload XLSX File" 
+        @change="generateTableFromXLSX" 
+      />
+    </v-container>
     <EmployeeDataTable
       v-if="tableHeaders.length && tableData.length"
       :table-headers="tableHeaders"

@@ -126,45 +126,49 @@ const openSendAllPayslipsDialog = () => {
 <template>
   <!-- TODO: Upon confirming sending all payslips. Show loading indicators for all rows accordingly. -->
 
-  <v-data-table :items="props.tableData" class="elevation-1">
-    <template v-slot:body="{ items }">
-      <tr v-for="(item, index) in items" :key="index">
-        <td v-for="header in tableHeaders" :key="header.value">
-          <!-- Table Data -->
-          <span v-if="header.value !== 'payslip' && header.value !== 'send-email'">
-            {{ item[header.value] }}
-          </span>
-          <!-- Payslip File Input -->
-          <v-file-input
-            v-else-if="header.value === 'payslip'"
-            label="Upload Payslip" 
-            @change="(event: Event) => assignPayslipToEmployee(item['Email'], event)"
-          />
-          <!-- Send Email Button (or Spinner if loading) -->
-          <template v-else>
-            <v-progress-circular
-              v-if="loadingStates[item['Email']]"
-              indeterminate
-              color="primary"
-              size="24"
-            ></v-progress-circular>
-            <v-btn
-              v-else
-              text="Send"
-              :disabled="!payslipFiles[item['Email']]"
-              @click="openSendPayslipDialog(item)"
-            ></v-btn>
-          </template>
-        </td>
-      </tr>
-    </template>
-  </v-data-table>
+  <v-container class="d-flex flex-column align-center w-100">
 
-  <v-btn 
-    text="Send All Payslips"
-    :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
-    @click="openSendAllPayslipsDialog"
-  />
+    <v-data-table :items="props.tableData" class="elevation-1">
+      <template v-slot:body="{ items }">
+        <tr v-for="(item, index) in items" :key="index">
+          <td v-for="header in tableHeaders" :key="header.value">
+            <!-- Table Data -->
+            <span v-if="header.value !== 'payslip' && header.value !== 'send-email'">
+              {{ item[header.value] }}
+            </span>
+            <!-- Payslip File Input -->
+            <v-file-input
+              v-else-if="header.value === 'payslip'"
+              label="Upload Payslip" 
+              @change="(event: Event) => assignPayslipToEmployee(item['Email'], event)"
+            />
+            <!-- Send Email Button (or Spinner if loading) -->
+            <template v-else>
+              <v-progress-circular
+                v-if="loadingStates[item['Email']]"
+                indeterminate
+                color="primary"
+                size="24"
+              ></v-progress-circular>
+              <v-btn
+                v-else
+                text="Send"
+                :disabled="!payslipFiles[item['Email']]"
+                @click="openSendPayslipDialog(item)"
+              ></v-btn>
+            </template>
+          </td>
+        </tr>
+      </template>
+    </v-data-table>
+  
+    <v-btn 
+      text="Send All Payslips"
+      :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
+      @click="openSendAllPayslipsDialog"
+    />
+  </v-container>
+
 
   <!-- Send Payslip Dialog -->
   <SendPayslipModal
