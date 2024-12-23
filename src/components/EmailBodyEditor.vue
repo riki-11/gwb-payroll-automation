@@ -16,9 +16,10 @@ const handleInput = () => {
     <v-sheet class="mx-auto">
       <v-textarea 
         v-model="textareaValue" 
-        clearable 
-        label="Email Body"
         @input="handleInput"
+        label="Email Body"
+        prepend-icon="mdi-email"
+        clearable 
       ></v-textarea>
     </v-sheet>
   </v-container>

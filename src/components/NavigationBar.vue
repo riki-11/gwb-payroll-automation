@@ -13,11 +13,11 @@ const navigateTo = (path: string) => {
 
 <template>
     <v-app-bar app>
-      <v-toolbar-title class="text-left">Payroll Automation</v-toolbar-title>
+      <v-toolbar-title class="text-left">GWB Entertainment Payroll Automation</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-tabs v-model="currentTab" background-color="primary" dark>
         <v-tab @click="navigateTo('/')">Upload Employee Data and Email Payslips</v-tab>
-        <v-tab @click="navigateTo('/generate-payslips')">Generate Payslips</v-tab>
+        <v-tab @click="navigateTo('/generate-payslips')" disabled>Generate Payslips</v-tab>
       </v-tabs>
     </v-app-bar>
 </template>
