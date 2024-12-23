@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Home from './components/Home.vue'
 import NavigationBar from './components/NavigationBar.vue';
 import { RouterView } from 'vue-router';
 </script>
