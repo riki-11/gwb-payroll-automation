@@ -137,6 +137,7 @@ const openSendAllPayslipsDialog = () => {
               {{ item[header.value] }}
             </span>
             <!-- Payslip File Input -->
+            <!-- TODO: Clean this up by removing file icon and making file input more visible. -->
             <v-file-input
               v-else-if="header.value === 'payslip'"
               label="Upload Payslip" 

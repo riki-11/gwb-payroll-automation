@@ -56,6 +56,12 @@ async function generateTableFromXLSX(event: Event) {
   }
 }
 
+function clearTableData() {
+  tableHeaders.value = [];
+  tableData.value = [];
+  emailBodyContent.value = '';
+}
+
 </script>
 
 <template>
@@ -65,8 +71,11 @@ async function generateTableFromXLSX(event: Event) {
     <EmailPayslipsInstructions/>
     <v-container class="w-100">
       <v-file-input 
-        label="Upload XLSX File" 
-        @change="generateTableFromXLSX" 
+        label="Upload XLSX or CSV File" 
+        @change="generateTableFromXLSX"
+        @click:clear="clearTableData" 
+        accept=".xlsx,.xls,.csv"
+        clearable
       />
     </v-container>
     <EmployeeDataTable
