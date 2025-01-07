@@ -163,22 +163,28 @@ const openSendAllPayslipsDialog = () => {
       />
     </v-container>
     <EmployeeDataTable
-    v-if="tableHeaders.length && tableData.length"
-    :table-headers="tableHeaders"
-    :table-data="tableData"
-    :payslip-files="payslipFiles"
-    :loading-states="loadingStates"
-    :email-body-content="emailBodyContent"
-    @open-send-payslip-dialog="openSendPayslipDialog"
+      v-if="tableHeaders.length && tableData.length"
+      :table-headers="tableHeaders"
+      :table-data="tableData"
+      :payslip-files="payslipFiles"
+      :loading-states="loadingStates"
+      :email-body-content="emailBodyContent"
+      @open-send-payslip-dialog="openSendPayslipDialog"
     />
-    <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
-      <h2>Write Email Template</h2>
+    <v-container
+      v-if="tableHeaders.length && tableData.length"
+      class="d-flex flex-column w-100 text-left py-4 ga-4"
+    >
+      <h2>Write the Email Template</h2>
       <EmailBodyEditor 
         v-if="tableHeaders.length && tableData.length"
         v-model="emailBodyContent"
       />
     </v-container>
-    <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
+    <v-container
+      v-if="tableHeaders.length && tableData.length" 
+      class="d-flex flex-column w-100 text-left py-4 ga-4"
+    >
       <v-btn 
         text="Send All Payslips"
         :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
