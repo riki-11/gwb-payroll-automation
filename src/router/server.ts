@@ -3,13 +3,7 @@ import nodemailer from 'nodemailer';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
 import multer from 'multer';
-import { fileURLToPath } from 'url'; // Needed to define __dirname
-
-// Define __dirname for ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -30,11 +24,6 @@ const transporter = nodemailer.createTransport({
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-interface EmailRequest {
-  to: string;
-  subject: string;
-  text: string;
-}
 
 app.post('/send-payslip-to-email', upload.single('file'), (req: Request, res: Response) => {
   if (req.file) {
