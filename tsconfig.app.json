@@ -13,7 +13,6 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "outDir": "./dist", // Output directory
     "jsx": "preserve",
 
     /* Linting */
