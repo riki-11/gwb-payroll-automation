@@ -1,65 +1,65 @@
 import express, { Request, Response } from 'express';
 import nodemailer from 'nodemailer';
-import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
 import multer from 'multer';
+import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 const port = 3000;
 
-// app.use(cors());
-// app.use(cors({
-//   origin: 'https://gwb-payroll-automation.vercel.app/'
-// }));
-app.use(bodyParser.json());
+// Get the frontend origin from environment variables
+const isProduction = process.env.NODE_ENV === 'production';
+const frontendOrigin = isProduction
+  ? process.env.FRONTEND_ORIGIN_PROD // Production URL
+  : process.env.FRONTEND_ORIGIN_LOCAL; // Local URL for development
 
-const transporter = nodemailer.createTransport({
-  service: 'hotmail',
-  auth: {
-    user: process.env.OUTLOOK_EMAIL, 
-    pass: process.env.OUTLOOK_PASSWORD, 
-  },
-});
+// Enable CORS for all routes based on environment
+app.use(cors({
+  origin: frontendOrigin, // Set the origin dynamically based on environment
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'multipart/form-data'],
+}));
+app.use(express.json());
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+const transporter = nodemailer.createTransport({
+  service: 'hotmail',
+  auth: {
+    user: process.env.OUTLOOK_EMAIL,
+    pass: process.env.OUTLOOK_PASSWORD,
+  },
+});
 
-app.post('/send-payslip-to-email', upload.single('file'), (req: Request, res: Response) => {
-  if (req.file) {
-    console.log(`File to be sent: ${req.file.originalname}`);
+app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded');
+  }
 
-    // Prepare the email options with the uploaded file as an attachment
-    const mailOptions = {
-      from: process.env.OUTLOOK_EMAIL,
-      to: req.body.to, // Get the recipient email from the request body
-      subject: req.body.subject, // Email subject
-      text: req.body.text, // Email body text
-      attachments: [
-        {
-          filename: req.file.originalname, // Name of the file as it will appear in the email
-          content: req.file.buffer, // The file content (stored in memory)
-          encoding: 'base64', // Use base64 encoding for the in-memory file
-        },
-      ],
-    };
+  const mailOptions = {
+    from: process.env.OUTLOOK_EMAIL,
+    to: req.body.to,
+    subject: req.body.subject,
+    text: req.body.text,
+    attachments: [
+      {
+        filename: req.file.originalname,
+        content: req.file.buffer,
+      },
+    ],
+  };
 
-    // Send the email with the attachment
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log('Error sending email:', error);
-        return res.status(500).json({ error: 'Failed to send email', details: error });
-      }
-      res.status(200).json({ message: 'File uploaded and email sent successfully!', info });
-    });
-  } else {
-    res.status(400).send('No file uploaded');
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Email sent successfully!', info });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send email', details: error });
   }
 });
 
-
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Local API running at http://localhost:${port}`);
 });
