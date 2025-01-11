@@ -18,8 +18,7 @@ interface ExtendedVercelRequest extends VercelRequest {
   file?: Express.Multer.File;
 }
 
-
-export default async (req: ExtendedVercelRequest, res: VercelResponse) => {
+const handler = async (req: ExtendedVercelRequest, res: VercelResponse) => {
   await new Promise((resolve, reject) =>
     upload.single('file')(req as any, {} as any, (err: any) => {
       if (err) return reject(err);
@@ -51,3 +50,5 @@ export default async (req: ExtendedVercelRequest, res: VercelResponse) => {
     res.status(500).json({ error: 'Failed to send email', details: error });
   }
 };
+
+export default handler;
