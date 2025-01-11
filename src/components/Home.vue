@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import XLSX from 'xlsx';
-
+ 
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
 import EmailBodyEditor from './EmailBodyEditor.vue';
