@@ -11,6 +11,9 @@ const app = express();
 const port = 3000;
 
 app.use(cors());
+app.use(cors({
+  origin: 'https://gwb-payroll-automation.vercel.app/'
+}));
 app.use(bodyParser.json());
 
 const transporter = nodemailer.createTransport({
@@ -25,7 +28,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 
-app.post('https://gwb-payroll-automation.vercel.app/send-payslip-to-email', upload.single('file'), (req: Request, res: Response) => {
+app.post('/send-payslip-to-email', upload.single('file'), (req: Request, res: Response) => {
   if (req.file) {
     console.log(`File to be sent: ${req.file.originalname}`);
 
