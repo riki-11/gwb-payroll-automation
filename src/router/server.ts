@@ -25,7 +25,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 
-app.post('/send-payslip-to-email', upload.single('file'), (req: Request, res: Response) => {
+app.post('https://gwb-payroll-automation.vercel.app/send-payslip-to-email', upload.single('file'), (req: Request, res: Response) => {
   if (req.file) {
     console.log(`File to be sent: ${req.file.originalname}`);
 
