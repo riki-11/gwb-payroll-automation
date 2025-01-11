@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import nodemailer from 'nodemailer';
 import bodyParser from 'body-parser';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 
@@ -10,10 +9,10 @@ dotenv.config();
 const app = express();
 const port = 3000;
 
-app.use(cors());
-app.use(cors({
-  origin: 'https://gwb-payroll-automation.vercel.app/'
-}));
+// app.use(cors());
+// app.use(cors({
+//   origin: 'https://gwb-payroll-automation.vercel.app/'
+// }));
 app.use(bodyParser.json());
 
 const transporter = nodemailer.createTransport({

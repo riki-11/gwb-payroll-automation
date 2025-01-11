@@ -14,6 +14,8 @@ import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
 type RowData = Record<string, any>; // A single row object (key-value pair)
 type HeaderData = { text: string; value: string }; // Header structure for Vuetify
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
 // Table variables
 const tableHeaders = ref<HeaderData[]>([]);
 const tableData = ref<RowData[]>([]);
@@ -94,7 +96,7 @@ const sendPayslipToEmployee = async (email: string) => {
     // Set loading state for current email being sent
     loadingStates.value[email] = true;
 
-    const response = await axios.post('http://localhost:3000/send-payslip-to-email', formData, {
+    const response = await axios.post(`${API_BASE_URL}/api/send-payslip-to-email`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -121,7 +123,7 @@ const sendAllPayslips = async () => {
         formData.append('text', emailBodyContent.value);
         formData.append('file', payslip);
 
-        await axios.post('http://localhost:3000/send-payslip-to-email', formData, {
+        await axios.post(`${API_BASE_URL}/api/send-payslip-to-email`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         console.log(`Payslip sent to: ${email}`);
