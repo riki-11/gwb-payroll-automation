@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import XLSX from 'xlsx';
-import axios from 'axios';
 
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
@@ -10,11 +9,12 @@ import EmailPayslipsInstructions from './EmailPayslipsInstructions.vue';
 import SendPayslipModal from './SendPayslipModal.vue';
 import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
 
+// APIs
+import { sendPayslipToEmail } from '../api/api';
+
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
 type HeaderData = { text: string; value: string }; // Header structure for Vuetify
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Table variables
 const tableHeaders = ref<HeaderData[]>([]);
@@ -53,11 +53,10 @@ async function generateTableFromXLSX(event: Event) {
       }));
 
       tableHeaders.value.push(
-        { text: 'Payslip Amazing', value: 'payslip' },
-        { text: 'Send Email', value: 'send-email'}
+        { text: 'Payslip', value: 'payslip' },
+        { text: 'Send Email', value: 'send-email' }
       );
 
-      // TODO: Investigate this section and why is it causing bugs in the headers.
       tableData.value = jsonData.slice(1).map(row => {
         const rowObject: RowData = {};
         tableHeaders.value.forEach((header, index) => {
@@ -77,30 +76,26 @@ function clearTableData() {
   emailBodyContent.value = '';
 }
 
-// potential bug: this only works well if it's one attachment per email.
 const sendPayslipToEmployee = async (email: string) => {
   const payslip = payslipFiles.value[email];
   if (!payslip) {
     console.error(`No payslip found for email: ${email}`);
     return;
   }
-  const formData = new FormData();
-
-  // Add the email data to the form
-  formData.append('to', email);
-  formData.append('subject', 'Sample payslip Email');
-  formData.append('text', emailBodyContent.value);
-  formData.append('file', payslip);
 
   try {
-    // Set loading state for current email being sent
     loadingStates.value[email] = true;
 
-    const response = await axios.post(`${API_BASE_URL}/api/send-payslip-to-email`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Create FormData and append necessary fields
+    const formData = new FormData();
+    formData.append('to', email);
+    formData.append('subject', 'Sample payslip Email');
+    formData.append('text', emailBodyContent.value);
+    formData.append('file', payslip);
+
+    // Use the centralized API function
+    const response = await sendPayslipToEmail(formData);
+
     console.log('File uploaded and email sent successfully:', response.data);
     sendPayslipDialog.value = false;
   } catch (error) {
@@ -108,7 +103,8 @@ const sendPayslipToEmployee = async (email: string) => {
   } finally {
     loadingStates.value[email] = false;
   }
-}
+};
+
 
 const sendAllPayslips = async () => {
   try {
@@ -117,15 +113,15 @@ const sendAllPayslips = async () => {
       const payslip = payslipFiles.value[email];
 
       if (email && payslip) {
+        // Create FormData for each email
         const formData = new FormData();
         formData.append('to', email);
         formData.append('subject', 'Sample payslip Email');
         formData.append('text', emailBodyContent.value);
         formData.append('file', payslip);
 
-        await axios.post(`${API_BASE_URL}/api/send-payslip-to-email`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        // Use the centralized API function
+        await sendPayslipToEmail(formData);
         console.log(`Payslip sent to: ${email}`);
       }
     });
@@ -142,12 +138,13 @@ const sendAllPayslips = async () => {
 const openSendPayslipDialog = (row: RowData) => {
   selectedRowForDialog.value = row;
   sendPayslipDialog.value = true;
-}
+};
 
 const openSendAllPayslipsDialog = () => {
   sendAllPayslipsDialog.value = true;
-}
+};
 </script>
+
 
 <template>
   <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
