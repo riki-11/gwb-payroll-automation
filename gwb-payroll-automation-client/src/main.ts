@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 
 // Vuetify
+// TODO: fix vuetify styles
 // import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
 import { createVuetify } from 'vuetify'

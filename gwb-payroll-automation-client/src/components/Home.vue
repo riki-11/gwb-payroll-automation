@@ -10,7 +10,7 @@ import SendPayslipModal from './SendPayslipModal.vue';
 import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
 
 // APIs
-import { sendPayslipToEmail } from '../api/api';
+import { sendPayslipToEmail, hello } from '../api/api';
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
@@ -143,11 +143,25 @@ const openSendPayslipDialog = (row: RowData) => {
 const openSendAllPayslipsDialog = () => {
   sendAllPayslipsDialog.value = true;
 };
+
+const callHelloApi = async () => {
+  try {
+        const response = await hello();
+        console.log('API Response:', response.data);
+      } catch (error) {
+        console.error('API Error:', error);
+      }
+  }
 </script>
 
 
 <template>
   <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
+  <div class="home">
+    <!-- Existing code -->
+    <button @click="callHelloApi" class="center-button">Call Hello API</button>
+    <!-- Existing code -->
+  </div>
   <v-container class="d-flex flex-column align-start">
     <!-- TODO: Limit file input to XLSX (and maybe CSV) -->
     <EmailPayslipsInstructions/>
