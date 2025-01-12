@@ -60,6 +60,10 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
   }
 });
 
+app.post('/hello', (req, res) => {
+  res.json({ message: 'Hello, world!' });
+});
+
 app.listen(port, () => {
   console.log(`Local API running at http://localhost:${port}`);
 });
