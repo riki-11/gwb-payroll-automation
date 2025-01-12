@@ -11,9 +11,6 @@ const port = 3000;
 
 // Get the frontend origin from environment variables
 const isProduction = process.env.NODE_ENV === 'production';
-const frontendOrigin = isProduction
-  ? process.env.FRONTEND_ORIGIN_PROD // Production URL
-  : process.env.FRONTEND_ORIGIN_LOCAL; // Local URL for development
 
 // Enable CORS for all routes based on environment
 app.use(cors((req, callback) => {
