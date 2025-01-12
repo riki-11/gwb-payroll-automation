@@ -16,11 +16,19 @@ const frontendOrigin = isProduction
   : process.env.FRONTEND_ORIGIN_LOCAL; // Local URL for development
 
 // Enable CORS for all routes based on environment
-app.use(cors({
-  origin: frontendOrigin, // Set the origin dynamically based on environment
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'multipart/form-data'],
+app.use(cors((req, callback) => {
+  const origin = isProduction
+    ? process.env.FRONTEND_ORIGIN_PROD
+    : process.env.FRONTEND_ORIGIN_LOCAL;
+
+  console.log(`CORS origin set to: ${origin}`);
+  callback(null, {
+    origin,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'multipart/form-data'],
+  });
 }));
+
 app.use(express.json());
 
 const storage = multer.memoryStorage();
