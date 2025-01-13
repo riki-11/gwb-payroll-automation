@@ -18,8 +18,4 @@ export const sendPayslipToEmail = async (formData: FormData) => {
     });
   };
 
-export const hello = async () => {
-  return axios.post(`${API_BASE_URL}/hello`);
-}
-
 export default api;
