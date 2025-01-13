@@ -8,6 +8,10 @@ const props = defineProps({
   sendAllPayslips: {
     type: Function,
     required: true
+  },
+  emailBodyContent: {
+    type: String,
+    required: true
   }
 });
 
@@ -27,6 +31,7 @@ const handleSendAllPayslips = () => {
       <v-card-title>Proceeed with sending all payslips?</v-card-title>
       <v-card-text>
         Pleae double check that all payslip files have been uploaded to the corresponding employee.
+        <p><strong>Email Body: </strong> {{ props.emailBodyContent }} </p>
       </v-card-text>
       <v-card-actions>
         <v-btn text="Cancel" @click="closeDialog"></v-btn>

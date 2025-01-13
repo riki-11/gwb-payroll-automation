@@ -199,11 +199,13 @@ const openSendAllPayslipsDialog = () => {
     :dialog="sendPayslipDialog"
     :rowData="selectedRowForDialog"
     :sendPayslipToEmployee="sendPayslipToEmployee"
+    :email-body-content="emailBodyContent"
     @update:dialog="sendPayslipDialog = $event"
   />
   <SendAllPayslipsModal
     :dialog="sendAllPayslipsDialog"
     :sendAllPayslips="sendAllPayslips"
+    :email-body-content="emailBodyContent"
     @update:dialog="sendAllPayslipsDialog = $event"
   />
 </template>

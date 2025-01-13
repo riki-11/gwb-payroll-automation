@@ -17,8 +17,6 @@ app.use(cors((req, callback) => {
   const origin = isProduction
     ? process.env.FRONTEND_ORIGIN_PROD
     : process.env.FRONTEND_ORIGIN_LOCAL;
-
-  console.log(`CORS origin set to: ${origin}`);
   callback(null, {
     origin,
     methods: ['GET', 'POST'],
@@ -63,10 +61,6 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
   } catch (error) {
     res.status(500).json({ error: 'Failed to send email', details: error });
   }
-});
-
-app.post('/hello', (req, res) => {
-  res.json({ message: 'Hello, world!' });
 });
 
 app.listen(port, () => {
