@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import authRoutes from './routes/auth';
 import nodemailer from 'nodemailer';
 import multer from 'multer';
 import dotenv from 'dotenv';
@@ -25,6 +26,8 @@ app.use(cors((req, callback) => {
 }));
 
 app.use(express.json());
+app.use(authRoutes);
+
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
