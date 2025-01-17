@@ -9,6 +9,14 @@ const api = axios.create({
   },
 });
 
+// export const login = async () => {
+//   return axios.get(`${API_BASE_URL}/auth/login`);
+// }
+
+export const logout = async () => {
+  return axios.get(`${API_BASE_URL}/auth/logout`);
+}
+
 export const sendPayslipToEmail = async (formData: FormData) => {
     
     return axios.post(`${API_BASE_URL}/api/send-payslip-to-email`, formData, {
