@@ -2,6 +2,8 @@
 import {useRouter} from 'vue-router';
 import { ref } from 'vue';
 
+import AuthButton from './AuthButton.vue';
+
 const router = useRouter();
 const currentTab = ref(router.currentRoute.value.path);
 
@@ -18,6 +20,7 @@ const navigateTo = (path: string) => {
       <v-tabs v-model="currentTab" background-color="primary" dark>
         <v-tab @click="navigateTo('/')">Upload Employee Data and Email Payslips</v-tab>
         <v-tab @click="navigateTo('/generate-payslips')" disabled>Generate Payslips</v-tab>
+        <AuthButton/>
       </v-tabs>
     </v-app-bar>
 </template>
