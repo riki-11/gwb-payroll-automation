@@ -115,16 +115,26 @@ const sendAllPayslips = async () => {
       const payslip = payslipFiles.value[email];
 
       if (email && payslip) {
-        // Create FormData for each email
-        const formData = new FormData();
-        formData.append('to', email);
-        formData.append('subject', emailSubject.value);
-        formData.append('text', emailBodyContent.value);
-        formData.append('file', payslip);
 
-        // Use the centralized API function
-        await sendPayslipToEmail(formData);
-        console.log(`Payslip sent to: ${email}`);
+        try {
+          // Create FormData for each email
+          loadingStates.value[email] = true;
+
+          const formData = new FormData();
+          formData.append('to', email);
+          formData.append('subject', emailSubject.value);
+          formData.append('text', emailBodyContent.value);
+          formData.append('file', payslip);
+  
+          // Use the centralized API function
+          const response = await sendPayslipToEmail(formData);
+          sentStates.value[email] = true;
+          console.log('File uploaded and email sent successfully:', response.data);
+        } catch (error) {
+          console.error(`Error sending payslip to: ${email}`, error);
+        } finally {
+          loadingStates.value[email] = false;
+        }
       }
     });
 
@@ -152,7 +162,6 @@ const openSendAllPayslipsDialog = () => {
 <template>
   <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
   <v-container class="d-flex flex-column align-start">
-    <!-- TODO: Limit file input to XLSX (and maybe CSV) -->
     <EmailPayslipsInstructions/>
     <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
     <h2>Upload Employee Data</h2>
