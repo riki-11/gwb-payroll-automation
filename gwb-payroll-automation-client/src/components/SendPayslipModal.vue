@@ -19,6 +19,10 @@ const props = defineProps({
     type: Function,
     required: true
   },
+  emailSubject: {
+    type: String,
+    required: true
+  },
   emailBodyContent: {
     type: String,
     required: true
@@ -68,7 +72,8 @@ const handleSendPayslipToEmployee = () => {
           <p><strong>Employee:</strong> {{ props.rowData['Name'] }}</p>
           <p><strong>Email:</strong> {{ props.rowData['Email'] }}</p>
           <p><strong>File:</strong> {{ payslip?.name }}</p>
-          <p><strong>Email Body:</strong> {{ props.emailBodyContent }} </p>
+          <p><strong>Email Subject: </strong> {{ props.emailSubject }} </p>
+          <p><strong>Email Body: </strong> {{ props.emailBodyContent }} </p>
         </div>
       </v-card-text>
       <v-card-actions>

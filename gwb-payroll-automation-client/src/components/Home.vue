@@ -5,6 +5,7 @@ import XLSX from 'xlsx';
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
 import EmailBodyEditor from './EmailBodyEditor.vue';
+import EmailSubjectEditor from './EmailSubjectEditor.vue';
 import EmailPayslipsInstructions from './EmailPayslipsInstructions.vue';
 import SendPayslipModal from './SendPayslipModal.vue';
 import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
@@ -20,6 +21,7 @@ type HeaderData = { text: string; value: string }; // Header structure for Vueti
 const tableHeaders = ref<HeaderData[]>([]);
 const tableData = ref<RowData[]>([]);
 const emailBodyContent = ref<string>('');
+const emailSubject = ref<string>('');
 
 // Payslip variables
 const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
@@ -89,7 +91,7 @@ const sendPayslipToEmployee = async (email: string) => {
     // Create FormData and append necessary fields
     const formData = new FormData();
     formData.append('to', email);
-    formData.append('subject', 'Sample payslip Email');
+    formData.append('subject', emailSubject.value);
     formData.append('text', emailBodyContent.value);
     formData.append('file', payslip);
 
@@ -116,7 +118,7 @@ const sendAllPayslips = async () => {
         // Create FormData for each email
         const formData = new FormData();
         formData.append('to', email);
-        formData.append('subject', 'Sample payslip Email');
+        formData.append('subject', emailSubject.value);
         formData.append('text', emailBodyContent.value);
         formData.append('file', payslip);
 
@@ -175,9 +177,17 @@ const openSendAllPayslipsDialog = () => {
       v-if="tableHeaders.length && tableData.length"
       class="d-flex flex-column w-100 text-left py-4 ga-4"
     >
-      <h2>Write the Email Template</h2>
+      <h2>Email Subject</h2>
+      <EmailSubjectEditor
+        v-model="emailSubject"
+      />
+    </v-container>
+    <v-container
+      v-if="tableHeaders.length && tableData.length"
+      class="d-flex flex-column w-100 text-left py-4 ga-4"
+    >
+      <h2>Email Body</h2>
       <EmailBodyEditor 
-        v-if="tableHeaders.length && tableData.length"
         v-model="emailBodyContent"
       />
     </v-container>
@@ -199,12 +209,14 @@ const openSendAllPayslipsDialog = () => {
     :dialog="sendPayslipDialog"
     :rowData="selectedRowForDialog"
     :sendPayslipToEmployee="sendPayslipToEmployee"
+    :email-subject="emailSubject"
     :email-body-content="emailBodyContent"
     @update:dialog="sendPayslipDialog = $event"
   />
   <SendAllPayslipsModal
     :dialog="sendAllPayslipsDialog"
     :sendAllPayslips="sendAllPayslips"
+    :email-subject="emailSubject"
     :email-body-content="emailBodyContent"
     @update:dialog="sendAllPayslipsDialog = $event"
   />
