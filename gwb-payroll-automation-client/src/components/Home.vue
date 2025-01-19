@@ -10,7 +10,7 @@ import SendPayslipModal from './SendPayslipModal.vue';
 import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
 
 // APIs
-import { sendPayslipToEmail } from '../api/api';
+import { sendPayslipToEmail, getUserInfo } from '../api/api';
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
@@ -148,6 +148,16 @@ const openSendAllPayslipsDialog = () => {
   sendAllPayslipsDialog.value = true;
 };
 
+// const getUserInfo = async () => {
+//   try {
+//     const response = await getUserInfo();
+//     // username.value = response.data.username;
+//     // userEmail.value = response.data.email;
+//   } catch (error) {
+//     console.error('Error getting user info:', error);
+//   }
+// }
+
 onMounted(() => {
   const params = new URLSearchParams(window.location.search);
   username.value = params.get('username');
@@ -166,9 +176,8 @@ onMounted(() => {
   <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
     <!-- Display logged-in user's information -->
     <v-container class="py-4">
-    <p>
-      <strong>Logged in as:</strong> {{ username }} ({{ userEmail }})
-    </p>
+      <h2>Welcome, {{ username }}</h2>
+      <v-btn @click="getUserInfo">Get User Info</v-btn>
     </v-container>
   <v-container class="d-flex flex-column align-start">
     <!-- TODO: Limit file input to XLSX (and maybe CSV) -->

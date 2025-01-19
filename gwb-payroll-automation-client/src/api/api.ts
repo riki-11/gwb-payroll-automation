@@ -9,12 +9,16 @@ const api = axios.create({
   },
 });
 
-// export const login = async () => {
-//   return axios.get(`${API_BASE_URL}/auth/login`);
-// }
+export const getUserInfo = async () => {
+  return axios.get(`${API_BASE_URL}/auth/get-user-info`, {
+    withCredentials: true
+  })
+}
 
-export const logout = async () => {
-  return axios.get(`${API_BASE_URL}/auth/logout`);
+export const verifySession = async () => {
+  return axios.get(`${API_BASE_URL}/auth/verify-session`, {
+    withCredentials: true
+  })
 }
 
 export const sendPayslipToEmail = async (formData: FormData) => {

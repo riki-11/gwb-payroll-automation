@@ -1,32 +1,43 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import axios from 'axios';
 
 const isLoggedIn = ref(false);
-const accessToken = ref<string>('');
+const username = ref<string>('');
+const userEmail = ref<string>('');
 const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
-// Check login status without relying on URL params
-const checkLoginStatus = () => {
-  // Check if the access token exists in localStorage
-  const savedToken = localStorage.getItem('accessToken');
-  if (savedToken) {
-    accessToken.value = savedToken;
-    isLoggedIn.value = true;
-  } else {
-    isLoggedIn.value = false;
+// Helper function to get a cookie by name
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    const cookie = parts.pop()?.split(';').shift() || null;
+    console.log(`Cookie [${name}]:`, cookie); // Debugging
+    return cookie;
   }
+  console.log(`Cookie [${name}] not found`);
+  return null;
+};
 
-  // If the access token is passed in the URL (after login callback)
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('accessToken');
-  if (token) {
-    // Save the token in localStorage and update login status
-    localStorage.setItem('accessToken', token);
-    accessToken.value = token;
-    isLoggedIn.value = true;
+const checkLoginStatus = async () => {
+  try {
+    const response = await axios.get(`${backendUrl}/auth/verify-session`, {
+      withCredentials: true, // Ensures cookies are sent with the request
+    });
 
-    // Remove the token from the URL to keep it clean
-    window.history.replaceState({}, document.title, window.location.pathname);
+    if (response.data.isLoggedIn) {
+      isLoggedIn.value = true;
+
+      // Optionally, fetch username and userEmail
+      username.value = getCookie('username') || 'Guest';
+      userEmail.value = getCookie('userEmail') || 'No Email';
+    } else {
+      isLoggedIn.value = false;
+    }
+  } catch (error) {
+    console.error('Error verifying session:', error);
+    isLoggedIn.value = false;
   }
 };
 
@@ -37,17 +48,27 @@ const authenticateLogin = () => {
 
 // Authenticate logout, redirecting to the backend's logout route
 const authenticateLogout = () => {
-  // Redirect the browser to the backend logout route
   window.location.href = `${backendUrl}/auth/logout`;
 
-  // Clear local state (optional since the backend redirect happens)
+  // Clear local state after logout
   isLoggedIn.value = false;
-  localStorage.removeItem('accessToken');
+  username.value = '';
+  userEmail.value = '';
 };
 
 onMounted(() => {
   checkLoginStatus();
 });
+
+// Watch reactivity for debugging
+watch(
+  [isLoggedIn, username, userEmail],
+  ([newLoggedIn, newUsername, newEmail]) => {
+    console.log(
+      `Watcher - isLoggedIn: ${newLoggedIn}, Username: ${newUsername}, Email: ${newEmail}`
+    );
+  }
+);
 </script>
 
 <template>

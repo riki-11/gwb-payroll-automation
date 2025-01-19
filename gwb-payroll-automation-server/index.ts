@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer';
 import multer from 'multer';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -26,8 +27,8 @@ app.use(cors((req, callback) => {
 }));
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(authRoutes);
-
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
