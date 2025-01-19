@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import XLSX from 'xlsx';
  
 // Components
@@ -15,6 +15,10 @@ import { sendPayslipToEmail } from '../api/api';
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
 type HeaderData = { text: string; value: string }; // Header structure for Vuetify
+
+// User authentication variables
+const username = ref(<string | null>(null));
+const userEmail = ref(<string | null>(null));
 
 // Table variables
 const tableHeaders = ref<HeaderData[]>([]);
@@ -144,11 +148,28 @@ const openSendAllPayslipsDialog = () => {
   sendAllPayslipsDialog.value = true;
 };
 
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search);
+  username.value = params.get('username');
+  userEmail.value = params.get('userEmail');
+  
+  console.log('User:', username.value, userEmail.value);
+
+  // Clear URL query after getting params
+  // window.history.replaceState({}, document.title, window.location.pathname);
+})
+
 </script>
 
 
 <template>
   <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
+    <!-- Display logged-in user's information -->
+    <v-container class="py-4">
+    <p>
+      <strong>Logged in as:</strong> {{ username }} ({{ userEmail }})
+    </p>
+    </v-container>
   <v-container class="d-flex flex-column align-start">
     <!-- TODO: Limit file input to XLSX (and maybe CSV) -->
     <EmailPayslipsInstructions/>

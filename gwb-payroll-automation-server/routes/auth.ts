@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import dotenv from 'dotenv';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -56,13 +57,25 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
     // Extract access token
     const accessToken = tokenResponse.accessToken;
 
-    // Redirect to the frontend with the access token
-    res.redirect(`${frontendOrigin}/?token=${accessToken}`);
+    // Make a request to Microsoft Graph API
+    const graphResponse = await axios.get('https://graph.microsoft.com/v1.0/me', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`, // Add access token to request headers
+      },
+    });
+
+    const user = graphResponse.data;
+    const username = user.displayName || 'Unknown User';
+    const userEmail = user.mail || user.userPrincipalName || 'Unknown Email';
+
+    // Redirect to the frontend with user info and access token
+    res.redirect(`${frontendOrigin}/?username=${encodeURIComponent(username)}&userEmail=${encodeURIComponent(userEmail)}&accessToken=${encodeURIComponent(accessToken)}`);
   } catch (error) {
     console.error('Error during token acquisition:', error);
     res.status(500).send('Authentication failed');
   }
 });
+
 
 // Logout 
 router.get('/auth/logout', async (req: Request, res: Response) => {
