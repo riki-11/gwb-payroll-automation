@@ -25,9 +25,8 @@ const emailSubject = ref<string>('');
 
 // Payslip variables
 const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
-
-// Button states
 const loadingStates = ref<Record<string, boolean>>({}); // Track loading state for each email
+const sentStates = ref<Record<string, boolean>>({});
 
 // Dialog states
 const sendPayslipDialog = ref(false);
@@ -95,10 +94,11 @@ const sendPayslipToEmployee = async (email: string) => {
     formData.append('text', emailBodyContent.value);
     formData.append('file', payslip);
 
-    // Use the centralized API function
     const response = await sendPayslipToEmail(formData);
 
     console.log('File uploaded and email sent successfully:', response.data);
+    sentStates.value[email] = true;
+
     sendPayslipDialog.value = false;
   } catch (error) {
     console.error('Error uploading file or sending email:', error);
@@ -170,7 +170,7 @@ const openSendAllPayslipsDialog = () => {
       :table-data="tableData"
       :payslip-files="payslipFiles"
       :loading-states="loadingStates"
-      :email-body-content="emailBodyContent"
+      :sent-states="sentStates"
       @open-send-payslip-dialog="openSendPayslipDialog"
     />
     <v-container

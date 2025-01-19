@@ -21,9 +21,9 @@ const props = defineProps({
     type: Object as () => Record<string, boolean>,
     required: true,
   },
-  emailBodyContent: {
-    type: String,
-    required: true
+  sentStates: {
+    type: Object as () => Record<string, boolean>,
+    required: true,
   }
 });
 
@@ -81,9 +81,12 @@ const assignPayslipToEmployee = (email: string, event: Event) => {
               <v-btn
                 v-else
                 text="Send"
-                :disabled="!props.payslipFiles[item['Email']]"
+                :disabled="!props.payslipFiles[item['Email']] || props.sentStates[item['Email']]"
+                :color="props.sentStates[item['Email']] ? 'success' : 'primary'"
                 @click="$emit('open-send-payslip-dialog', item)"
-              ></v-btn>
+              >
+                {{ props.sentStates[item['Email']] ? 'Sent' : 'Send' }}
+              </v-btn>
             </template>
           </td>
         </tr>
