@@ -94,9 +94,7 @@ const sendPayslipToEmployee = async (email: string) => {
     formData.append('text', emailBodyContent.value);
     formData.append('file', payslip);
 
-    const response = await sendPayslipToEmail(formData);
-
-    console.log('File uploaded and email sent successfully:', response.data);
+    await sendPayslipToEmail(formData);
     sentStates.value[email] = true;
 
     sendPayslipDialog.value = false;
@@ -127,9 +125,8 @@ const sendAllPayslips = async () => {
           formData.append('file', payslip);
   
           // Use the centralized API function
-          const response = await sendPayslipToEmail(formData);
+          await sendPayslipToEmail(formData);
           sentStates.value[email] = true;
-          console.log('File uploaded and email sent successfully:', response.data);
         } catch (error) {
           console.error(`Error sending payslip to: ${email}`, error);
         } finally {
