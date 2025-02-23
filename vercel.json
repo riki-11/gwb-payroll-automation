@@ -1,0 +1,27 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "gwb-payroll-automation-client/package.json",
+        "use": "@vercel/static-build",
+        "config": {
+          "distDir": "gwb-payroll-automation-client/dist"
+        }
+      },
+      {
+        "src": "gwb-payroll-automation-server/index.ts",
+        "use": "@vercel/node"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/api/(.*)",
+        "dest": "gwb-payroll-automation-server/index.ts"
+      },
+      {
+        "src": "/(.*)",
+        "dest": "gwb-payroll-automation-client/dist/$1"
+      }
+    ]
+  }
+  

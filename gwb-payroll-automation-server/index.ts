@@ -12,16 +12,16 @@ const port = 3000;
 
 // Get the frontend origin from environment variables
 const isProduction = process.env.NODE_ENV === 'production';
-const origin = isProduction ? process.env.FRONTEND_ORIGIN_PROD : process.env.FRONTEND_ORIGIN_LOCAL;
+const allowedOrigins = [
+  process.env.FRONTEND_ORIGIN_PROD || "https://gwb-payroll-automation-client.vercel.app/",
+  process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
+];
 
 // Enable CORS for all routes based on environment
-app.use(cors((req, callback) => {
-  callback(null, {
-    origin,
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'multipart/form-data'],
-    credentials: true
-  });
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
@@ -39,12 +39,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Request, res: Response) => {
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working!" });
+});
 
-  res.setHeader('Access-Control-Allow-Origin', origin as string);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, multipart/form-data');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Request, res: Response) => {
   
   if (!req.file) {
     return res.status(400).send('No file uploaded');
