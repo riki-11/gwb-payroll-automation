@@ -12,16 +12,15 @@ const port = 3000;
 
 // Get the frontend origin from environment variables
 const isProduction = process.env.NODE_ENV === 'production';
+const origin = isProduction ? process.env.FRONTEND_ORIGIN_PROD : process.env.FRONTEND_ORIGIN_LOCAL;
 
 // Enable CORS for all routes based on environment
 app.use(cors((req, callback) => {
-  const origin = isProduction
-    ? process.env.FRONTEND_ORIGIN_PROD
-    : process.env.FRONTEND_ORIGIN_LOCAL;
   callback(null, {
     origin,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization', 'multipart/form-data'],
+    credentials: true
   });
 }));
 
@@ -41,6 +40,12 @@ const transporter = nodemailer.createTransport({
 });
 
 app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Request, res: Response) => {
+
+  res.setHeader('Access-Control-Allow-Origin', origin as string);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, multipart/form-data');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
   if (!req.file) {
     return res.status(400).send('No file uploaded');
   }
