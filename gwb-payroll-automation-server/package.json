@@ -5,7 +5,6 @@
   "scripts": {
     "start": "npx tsx index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "vercel-build": "tsc"
   },
   "author": "",
   "license": "ISC",
