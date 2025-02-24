@@ -4,19 +4,24 @@
       {
         "src": "./index.ts",
         "use": "@vercel/node"
+      },
+      {
+        "src": "routes/**/*.ts",
+        "use": "@vercel/node"
       }
     ],
     "routes": [
+      {
+        "src": "/api/auth",
+        "dest": "/routes/auth.ts"
+      },
       {
         "src": "/api/(.*)",
         "dest": "/index.ts",
         "methods": [
           "GET",
           "POST",
-          "PUT",
-          "PATCH",
-          "OPTIONS",
-          "DELETE"
+          "OPTIONS"
         ],
         "headers": {
           "Access-Control-Allow-Origin": "*",
