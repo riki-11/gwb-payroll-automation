@@ -18,6 +18,7 @@ const checkLoginStatus = () => {
     localStorage.setItem('accessToken', token);
 
     // Remove the token from the URL to keep it clean
+    // BUG: access token still shows up in URL.
     window.history.replaceState({}, document.title, window.location.pathname);
   } else {
     const savedToken = localStorage.getItem('accessToken');
