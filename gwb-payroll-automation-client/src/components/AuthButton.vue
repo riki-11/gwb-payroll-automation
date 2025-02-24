@@ -33,13 +33,15 @@ const checkLoginStatus = () => {
 
 // TODO: Find a way to make the authentication less hard coded/client-side dependent
 
+// TODO: revert to /auth/login
+
 const authenticateLogin = () => {
-  window.location.href = `${backendUrl}/auth/login`;
+  window.location.href = `${backendUrl}/api/auth/login`;
 };
 
 const authenticateLogout = () => {
   // Redirect the browser to the backend logout route
-  window.location.href = `${backendUrl}/auth/logout`;
+  window.location.href = `${backendUrl}/api/auth/logout`;
 
   // Clear local state (optional since the backend redirect happens)
   isLoggedIn.value = false;
