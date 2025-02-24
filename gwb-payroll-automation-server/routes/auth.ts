@@ -28,6 +28,10 @@ const frontendOrigin = isProduction
   ? process.env.FRONTEND_ORIGIN_PROD!
   : process.env.FRONTEND_ORIGIN_LOCAL!;
 
+router.get("/auth/test", (req, res) => {
+  res.json({ message: "API is working!" });
+});
+
 // Microsoft login
 router.get('/auth/login', async (req: Request, res: Response) => {
   const authUrl = await msalClient.getAuthCodeUrl({
