@@ -19,7 +19,7 @@
         "dest": "gwb-payroll-automation-server/index.ts"
       },
       {
-        "src": "/api/auth",
+        "src": "/auth",
         "dest": "/routes/auth.ts"
       },
       {
