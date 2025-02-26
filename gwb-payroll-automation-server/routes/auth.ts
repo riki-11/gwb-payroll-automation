@@ -28,10 +28,6 @@ const frontendOrigin = isProduction
   ? process.env.FRONTEND_ORIGIN_PROD!
   : process.env.FRONTEND_ORIGIN_LOCAL!;
 
-router.get("/auth/test", (req, res) => {
-  res.json({ message: "API is working!" });
-});
-
 // Microsoft login
 router.get('/auth/login', async (req: Request, res: Response) => {
   const authUrl = await msalClient.getAuthCodeUrl({
@@ -60,6 +56,13 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
     // Extract access token
     const accessToken = tokenResponse.accessToken;
 
+    // Fetch user details from Microsoft Graph API
+    const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+
+    const userData = await userResponse.json();
     // Redirect to the frontend with the access token
     res.redirect(`${frontendOrigin}/?token=${accessToken}`);
   } catch (error) {
@@ -83,6 +86,36 @@ router.get('/auth/logout', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error during logout:', error);
     res.status(500).send('Logout failed');
+  }
+});
+
+router.get('/auth/get-current-user', async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send('Unauthorized');
+  } 
+
+  const accessToken = authHeader.split(' ')[1];
+
+  try {
+    // Fetch details from Microsoft Graph API
+    const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+      headers: { Authorization: `Bearer ${accessToken}`},
+    });
+
+    if (!userResponse.ok) {
+      return res.status(userResponse.status).json({ error: 'Failed to fetch user details' });
+    }
+
+    const userData = await userResponse.json();
+    res.json({
+      accessToken: accessToken,
+      name: userData.displayName,
+      email: userData.mail
+    });
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).send('Error fetching user details');
   }
 });
 
