@@ -75,6 +75,9 @@ function clearTableData() {
   tableHeaders.value = [];
   tableData.value = [];
   emailBodyContent.value = '';
+  payslipFiles.value = {};
+  loadingStates.value = {};
+  sentStates.value = {};
 }
 
 const sendPayslipToEmployee = async (email: string) => {
@@ -113,7 +116,6 @@ const sendAllPayslips = async () => {
       const payslip = payslipFiles.value[email];
 
       if (email && payslip) {
-
         try {
           // Create FormData for each email
           loadingStates.value[email] = true;
@@ -219,11 +221,15 @@ const openSendAllPayslipsDialog = () => {
     :email-body-content="emailBodyContent"
     @update:dialog="sendPayslipDialog = $event"
   />
+  
+  <!-- Send All Payslips Dialog -->
   <SendAllPayslipsModal
     :dialog="sendAllPayslipsDialog"
     :sendAllPayslips="sendAllPayslips"
     :email-subject="emailSubject"
     :email-body-content="emailBodyContent"
+    :tableData="tableData"
+    :payslipFiles="payslipFiles"
     @update:dialog="sendAllPayslipsDialog = $event"
   />
 </template>
