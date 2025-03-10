@@ -15,6 +15,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Get the frontend origin from environment variables
 const allowedOrigins = [
+  // TODO: Hide the frontend origins in production?
   process.env.FRONTEND_ORIGIN_PROD || "https://gwb-payroll-automation-client.vercel.app/",
   process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
 ];
@@ -47,11 +48,11 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
     return res.status(400).send('No file uploaded');
   }
 
-  const mailOptions = {
+  // Create mail options object
+  const mailOptions: nodemailer.SendMailOptions = {
     from: process.env.OUTLOOK_EMAIL,
     to: req.body.to,
     subject: req.body.subject,
-    text: req.body.text,
     attachments: [
       {
         filename: req.file.originalname,
@@ -59,6 +60,22 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
       },
     ],
   };
+
+  // Check if HTML content was provided
+  if (req.body.html) {
+    mailOptions.html = req.body.html;
+    
+    // Also include plaintext version as fallback for email clients that don't support HTML
+    if (req.body.text) {
+      mailOptions.text = req.body.text;
+    } else {
+      // Create a basic text version by stripping HTML tags
+      mailOptions.text = req.body.html.replace(/<[^>]*>/g, '');
+    }
+  } else if (req.body.text) {
+    // If only text was provided, use that
+    mailOptions.text = req.body.text;
+  }
 
   try {
     const info = await transporter.sendMail(mailOptions);
@@ -71,4 +88,3 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
 app.listen(port, () => {
   console.log(`Local API running at http://localhost:${port}`);
 });
-
