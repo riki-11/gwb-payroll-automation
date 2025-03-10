@@ -840,6 +840,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^22.13.10":
+  version: 22.13.10
+  resolution: "@types/node@npm:22.13.10"
+  dependencies:
+    undici-types: "npm:~6.20.0"
+  checksum: 10c0/a3865f9503d6f718002374f7b87efaadfae62faa499c1a33b12c527cfb9fd86f733e1a1b026b80c5a0e4a965701174bc3305595a7d36078aa1abcf09daa5dee9
+  languageName: node
+  linkType: hard
+
 "@vitejs/plugin-vue@npm:^5.2.1":
   version: 5.2.1
   resolution: "@vitejs/plugin-vue@npm:5.2.1"
@@ -1669,12 +1678,14 @@ __metadata:
   resolution: "gwb-payroll-automation-client@workspace:."
   dependencies:
     "@mdi/font": "npm:^7.4.47"
+    "@tiptap/core": "npm:^2.11.5"
     "@tiptap/extension-link": "npm:^2.11.5"
     "@tiptap/extension-underline": "npm:^2.11.5"
     "@tiptap/pm": "npm:^2.11.5"
     "@tiptap/starter-kit": "npm:^2.11.5"
     "@tiptap/vue-3": "npm:^2.11.5"
     "@types/body-parser": "npm:^1"
+    "@types/node": "npm:^22.13.10"
     "@vitejs/plugin-vue": "npm:^5.2.1"
     "@vue/tsconfig": "npm:^0.7.0"
     axios: "npm:^1.7.9"
