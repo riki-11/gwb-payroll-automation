@@ -521,6 +521,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-color@npm:^2.11.5":
+  version: 2.11.5
+  resolution: "@tiptap/extension-color@npm:2.11.5"
+  peerDependencies:
+    "@tiptap/core": ^2.7.0
+    "@tiptap/extension-text-style": ^2.7.0
+  checksum: 10c0/6c53497713e42af9f899f2605924d22466b6462a9e335b31a4c5dee8dd6ee114fbbd7931cf1a9fdab8a6695dd7bfc307386c29475516f740d56f3bf93f0d8754
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-document@npm:^2.11.5":
   version: 2.11.5
   resolution: "@tiptap/extension-document@npm:2.11.5"
@@ -600,6 +610,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-image@npm:^2.11.5":
+  version: 2.11.5
+  resolution: "@tiptap/extension-image@npm:2.11.5"
+  peerDependencies:
+    "@tiptap/core": ^2.7.0
+  checksum: 10c0/cb6dcc99b798dbe6af06315302ff377072f3bd5b10bef9d8ea621b2aa7893b07debb87ec8556efc8eee78511912c03cca289afdcc215d1b8724b2293448b0325
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-italic@npm:^2.11.5":
   version: 2.11.5
   resolution: "@tiptap/extension-italic@npm:2.11.5"
@@ -654,6 +673,43 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.7.0
   checksum: 10c0/f8f8643840413c036326ed265e17236b1a7aff5c5e18af251343102c57b6b7ed7201c070441f5011e4dbc41fb5b5451a9122e5b92a5d6c5ae7d8359438e8cb24
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table-cell@npm:^2.11.5":
+  version: 2.11.5
+  resolution: "@tiptap/extension-table-cell@npm:2.11.5"
+  peerDependencies:
+    "@tiptap/core": ^2.7.0
+  checksum: 10c0/8e3f95ff5afe3424b5bbe4f8ef00ec83ca6658b00004519654f5aaf3525139df239d664455155a53c1b6462f0c479e29dd9980dc0fd6c5342ddad729f1440426
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table-header@npm:^2.11.5":
+  version: 2.11.5
+  resolution: "@tiptap/extension-table-header@npm:2.11.5"
+  peerDependencies:
+    "@tiptap/core": ^2.7.0
+  checksum: 10c0/fa220b61ed4e77c0306987d83f138c731a58171c4192a953916529f079caccd87874d8e27fb5ac6498dde7f620eb77062832b12c5f2b52bf032f9b0d97618028
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table-row@npm:^2.11.5":
+  version: 2.11.5
+  resolution: "@tiptap/extension-table-row@npm:2.11.5"
+  peerDependencies:
+    "@tiptap/core": ^2.7.0
+  checksum: 10c0/190fcbfd38f46163cc16a5f5288551fc7acc1931356381d49919a15e09bc784f272748b92af126767b3e8d96191c0d447cfde53e3b50381fc593c0d14c1a7793
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-table@npm:^2.11.5":
+  version: 2.11.5
+  resolution: "@tiptap/extension-table@npm:2.11.5"
+  peerDependencies:
+    "@tiptap/core": ^2.7.0
+    "@tiptap/pm": ^2.7.0
+  checksum: 10c0/2f5b2a4a04aec635379d2b2601d45ade8b35e8cbe316d0127047256440dfc59191b7d1c78d21883df54472d226a417799849c004c6c86868460307a372479204
   languageName: node
   linkType: hard
 
@@ -1679,7 +1735,14 @@ __metadata:
   dependencies:
     "@mdi/font": "npm:^7.4.47"
     "@tiptap/core": "npm:^2.11.5"
+    "@tiptap/extension-color": "npm:^2.11.5"
+    "@tiptap/extension-image": "npm:^2.11.5"
     "@tiptap/extension-link": "npm:^2.11.5"
+    "@tiptap/extension-table": "npm:^2.11.5"
+    "@tiptap/extension-table-cell": "npm:^2.11.5"
+    "@tiptap/extension-table-header": "npm:^2.11.5"
+    "@tiptap/extension-table-row": "npm:^2.11.5"
+    "@tiptap/extension-text-style": "npm:^2.11.5"
     "@tiptap/extension-underline": "npm:^2.11.5"
     "@tiptap/pm": "npm:^2.11.5"
     "@tiptap/starter-kit": "npm:^2.11.5"
