@@ -9,7 +9,7 @@ import EmailSubjectEditor from './EmailSubjectEditor.vue';
 import EmailPayslipsInstructions from './EmailPayslipsInstructions.vue';
 import SendPayslipModal from './SendPayslipModal.vue';
 import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
-import MinTiptapEditor from './MinTiptapEditor.vue';
+import EmailSignatureEditor from './EmailSignatureEditor.vue';
 
 // APIs
 import { sendPayslipToEmail } from '../api/api';
@@ -214,7 +214,10 @@ const openSendAllPayslipsDialog = () => {
       v-if="tableHeaders.length && tableData.length"
       class="d-flex flex-column w-100 text-left py-4"
     >
-      <MinTiptapEditor
+      <!-- <MinTiptapEditor
+        v-model="emailSignature"
+      /> -->
+      <EmailSignatureEditor
         v-model="emailSignature"
       />
     </v-container>
