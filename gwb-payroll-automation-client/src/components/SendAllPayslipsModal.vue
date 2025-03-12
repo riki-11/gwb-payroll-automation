@@ -35,6 +35,11 @@ const emit = defineEmits(['update:dialog']);
 
 const closeDialog = () => emit('update:dialog', false);
 
+// Determine if content contains HTML
+const isHtmlContent = computed(() => {
+  return /<[a-z][\s\S]*>/i.test(props.emailBodyContent);
+});
+
 /**
  * Extracts worker number from payslip filename
  */
@@ -49,6 +54,7 @@ const extractWorkerNumberFromFilename = (filename: string): string | null => {
   for (const pattern of patterns) {
     const match = filename.match(pattern);
     if (match && match[1]) {
+      // If found with C prefix but without it in the data, or vice versa
       return match[1].replace(/^0+/, ''); // Remove leading zeros for comparison
     }
   }
@@ -59,7 +65,7 @@ const extractWorkerNumberFromFilename = (filename: string): string | null => {
 /**
  * Validates if the payslip file matches the employee's worker number
  */
-const validatePayslipMatch = (
+ const validatePayslipMatch = (
   filename: string, 
   workerNumber: string | number
 ): { isValid: boolean; message: string } => {
@@ -142,7 +148,23 @@ const handleSendAllPayslips = () => {
         <p>Please double check that all payslip files have been uploaded to the corresponding employee.</p>
         <p><strong>Files assigned:</strong> {{ assignedFilesCount }} out of {{ tableData.length }} employees</p>
         <p><strong>Email Subject: </strong> {{ props.emailSubject }} </p>
-        <p><strong>Email Body: </strong> {{ props.emailBodyContent }} </p>
+        
+        <!-- Email content preview -->
+        <div class="my-3">
+          <div class="text-subtitle-1">Email Preview:</div>
+          <v-card variant="outlined" class="pa-3 my-2 email-preview-container">
+            <div v-if="isHtmlContent" v-html="props.emailBodyContent"></div>
+            <pre v-else>{{ props.emailBodyContent }}</pre>
+          </v-card>
+          <v-chip
+            v-if="isHtmlContent"
+            color="info"
+            size="small"
+            class="mt-1"
+          >
+            HTML Format
+          </v-chip>
+        </div>
         
         <!-- Show validation summary -->
         <v-alert v-if="validationIssues.length > 0" 
@@ -186,3 +208,10 @@ const handleSendAllPayslips = () => {
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+.email-preview-container {
+  max-height: 300px;
+  overflow-y: auto;
+}
+</style>

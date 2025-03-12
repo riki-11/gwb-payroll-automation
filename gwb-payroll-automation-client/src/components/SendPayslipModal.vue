@@ -34,6 +34,11 @@ const emit = defineEmits(['update:dialog']);
 
 const closeDialog = () => emit('update:dialog', false);
 
+// Determine if content contains HTML
+const isHtmlContent = computed(() => {
+  return /<[a-z][\s\S]*>/i.test(props.emailBodyContent);
+});
+
 const payslip = computed(() => {
   if (props.payslipFiles) {
     if (props.rowData) {
@@ -118,8 +123,6 @@ const canSend = computed(() => {
   return validationResult.value.isValid || mismatchAcknowledged.value;
 });
 
-
-
 const handleSendPayslipToEmployee = () => {
   if (props.rowData) {
     const email = props.rowData['Email'];
@@ -134,28 +137,6 @@ const handleSendPayslipToEmployee = () => {
   }
 }
 </script>
-<!-- 
-<template>
-   <v-dialog v-model="props.dialog" width="auto">
-    <v-card>
-      <v-card-title>Proceed with sending payslip?</v-card-title>
-      <v-card-text>
-        <div v-if="props.rowData">
-          <p><strong>Worker No.:</strong> {{ props.rowData['Worker No.'] }}</p>
-          <p><strong>Employee:</strong> {{ props.rowData['Name'] }}</p>
-          <p><strong>Email:</strong> {{ props.rowData['Email'] }}</p>
-          <p><strong>File:</strong> {{ payslip?.name }}</p>
-          <p><strong>Email Subject: </strong> {{ props.emailSubject }} </p>
-          <p><strong>Email Body: </strong> {{ props.emailBodyContent }} </p>
-        </div>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn text="Cancel" @click="closeDialog"></v-btn>
-        <v-btn text="Send" @click="handleSendPayslipToEmployee"></v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-</template> -->
 
 <template>
   <!-- Shared Dialog -->
@@ -169,7 +150,23 @@ const handleSendPayslipToEmployee = () => {
          <p><strong>Email:</strong> {{ props.rowData['Email'] }}</p>
          <p><strong>File:</strong> {{ payslip?.name }}</p>
          <p><strong>Email Subject: </strong> {{ props.emailSubject }} </p>
-         <p><strong>Email Body: </strong> {{ props.emailBodyContent }} </p>
+         
+         <!-- Email content preview -->
+         <div class="my-3">
+           <div class="text-subtitle-1">Email Preview:</div>
+           <v-card variant="outlined" class="pa-3 my-2 email-preview-container">
+             <div v-if="isHtmlContent" v-html="props.emailBodyContent"></div>
+             <pre v-else>{{ props.emailBodyContent }}</pre>
+           </v-card>
+           <v-chip
+             v-if="isHtmlContent"
+             color="info"
+             size="small"
+             class="mt-1"
+           >
+             HTML Format
+           </v-chip>
+         </div>
          
          <!-- Show validation warning if applicable -->
          <v-alert v-if="validationResult && !validationResult.isValid" 
@@ -208,3 +205,10 @@ const handleSendPayslipToEmployee = () => {
    </v-card>
  </v-dialog>
 </template>
+
+<style scoped>
+.email-preview-container {
+  max-height: 300px;
+  overflow-y: auto;
+}
+</style>

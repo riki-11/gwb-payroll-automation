@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import XLSX from 'xlsx';
  
 // Components
@@ -9,6 +9,7 @@ import EmailSubjectEditor from './EmailSubjectEditor.vue';
 import EmailPayslipsInstructions from './EmailPayslipsInstructions.vue';
 import SendPayslipModal from './SendPayslipModal.vue';
 import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
+import EmailSignatureEditor from './EmailSignatureEditor.vue';
 
 // APIs
 import { sendPayslipToEmail } from '../api/api';
@@ -21,7 +22,16 @@ type HeaderData = { text: string; value: string }; // Header structure for Vueti
 const tableHeaders = ref<HeaderData[]>([]);
 const tableData = ref<RowData[]>([]);
 const emailBodyContent = ref<string>('');
+const emailSignature = ref<string>('');
 const emailSubject = ref<string>('');
+
+// Combine email body and signature
+const fullEmailContent = computed(() => {
+  if (emailSignature.value) {
+    return emailBodyContent.value + emailSignature.value;
+  }
+  return emailBodyContent.value;
+});
 
 // Payslip variables
 const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
@@ -75,6 +85,7 @@ function clearTableData() {
   tableHeaders.value = [];
   tableData.value = [];
   emailBodyContent.value = '';
+  emailSignature.value = '';
   payslipFiles.value = {};
   loadingStates.value = {};
   sentStates.value = {};
@@ -94,7 +105,7 @@ const sendPayslipToEmployee = async (email: string) => {
     const formData = new FormData();
     formData.append('to', email);
     formData.append('subject', emailSubject.value);
-    formData.append('text', emailBodyContent.value);
+    formData.append('html', fullEmailContent.value); // Use the combined content
     formData.append('file', payslip);
 
     await sendPayslipToEmail(formData);
@@ -123,7 +134,7 @@ const sendAllPayslips = async () => {
           const formData = new FormData();
           formData.append('to', email);
           formData.append('subject', emailSubject.value);
-          formData.append('text', emailBodyContent.value);
+          formData.append('html', fullEmailContent.value); // Use the combined content
           formData.append('file', payslip);
   
           // Use the centralized API function
@@ -164,6 +175,7 @@ const openSendAllPayslipsDialog = () => {
     <EmailPayslipsInstructions/>
     <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
     <h2>Upload Employee Data</h2>
+      <p>Ensure that spreadsheet has, at the very least, columns entitled "Worker No." and "Email" (strict capitalization and spelling).</p>
       <v-file-input 
         label="Upload XLSX or CSV File" 
         @change="generateTableFromXLSX"
@@ -200,6 +212,17 @@ const openSendAllPayslipsDialog = () => {
       />
     </v-container>
     <v-container
+      v-if="tableHeaders.length && tableData.length"
+      class="d-flex flex-column w-100 text-left py-4"
+    >
+      <!-- <MinTiptapEditor
+        v-model="emailSignature"
+      /> -->
+      <EmailSignatureEditor
+        v-model="emailSignature"
+      />
+    </v-container>
+    <v-container
       v-if="tableHeaders.length && tableData.length" 
       class="d-flex flex-column w-100 text-left py-4 ga-4"
     >
@@ -207,6 +230,10 @@ const openSendAllPayslipsDialog = () => {
         text="Send All Payslips"
         :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
         @click="openSendAllPayslipsDialog"
+        color="primary"
+        prepend-icon="mdi-email-send"
+        size="large"
+        class="mt-4"
       />
     </v-container>
   </v-container>
@@ -218,7 +245,7 @@ const openSendAllPayslipsDialog = () => {
     :rowData="selectedRowForDialog"
     :sendPayslipToEmployee="sendPayslipToEmployee"
     :email-subject="emailSubject"
-    :email-body-content="emailBodyContent"
+    :email-body-content="fullEmailContent"
     @update:dialog="sendPayslipDialog = $event"
   />
   
@@ -227,7 +254,7 @@ const openSendAllPayslipsDialog = () => {
     :dialog="sendAllPayslipsDialog"
     :sendAllPayslips="sendAllPayslips"
     :email-subject="emailSubject"
-    :email-body-content="emailBodyContent"
+    :email-body-content="fullEmailContent"
     :tableData="tableData"
     :payslipFiles="payslipFiles"
     @update:dialog="sendAllPayslipsDialog = $event"
