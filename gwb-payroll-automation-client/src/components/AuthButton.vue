@@ -14,6 +14,9 @@ const checkLoginStatus = () => {
   const token = urlParams.get('token');
 
   if (token) {
+
+    console.log('I HAVE THE TOKEN!')
+
     accessToken.value = token;
     isLoggedIn.value = true;
     // TODO: Use a better way of storing the token
@@ -24,6 +27,7 @@ const checkLoginStatus = () => {
     window.history.replaceState({}, document.title, window.location.pathname);
     return true;
   } else {
+    console.log('Token already stored!')
     const savedToken = localStorage.getItem('accessToken');
     
     if (savedToken) {
@@ -31,6 +35,7 @@ const checkLoginStatus = () => {
       isLoggedIn.value = true;
       return true;
     } else {
+      console.log('No token exists. Logged out.')
       isLoggedIn.value = false;
       return false;
     }
@@ -87,6 +92,7 @@ const fetchUserDetails = async () => {
 onMounted(() => {
   if (checkLoginStatus()) {
     fetchUserDetails();
+    console.log(`BACKEND URL: ${backendUrl} used with /auth/...`)
   } else {
     // TODO: Remove this in future.
     console.log('Not currently logged in.');
