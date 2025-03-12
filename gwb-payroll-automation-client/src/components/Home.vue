@@ -175,6 +175,7 @@ const openSendAllPayslipsDialog = () => {
     <EmailPayslipsInstructions/>
     <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
     <h2>Upload Employee Data</h2>
+      <p>Ensure that spreadsheet has, at the very least, columns entitled "Worker No." and "Email" (strict capitalization and spelling).</p>
       <v-file-input 
         label="Upload XLSX or CSV File" 
         @change="generateTableFromXLSX"
