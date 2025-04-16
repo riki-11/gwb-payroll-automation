@@ -4,6 +4,7 @@ import { ConfidentialClientApplication } from '@azure/msal-node';
 import { sql, poolPromise } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
+import * as cookie from 'cookie';
 import { asyncHandler } from '../utils/asyncHandler';
 
 dotenv.config();
@@ -46,13 +47,14 @@ router.get('/auth/login',  asyncHandler( async (req: Request, res: Response) => 
     });
 
     // Store the session ID in a secure cookie
-    // TODO: change?
-    res.cookie('auth_session', sessionId, {
+    res.setHeader('Set-Cookie', cookie.serialize('auth_session', sessionId, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 1000 // 1 hour
-    });
+      path: '/',
+      maxAge: 60 * 60, // 1 hour in seconds
+    }));
+    
 
     // Redirect to Microsoft login
     res.redirect(authUrl);
@@ -66,7 +68,10 @@ router.get('/auth/login',  asyncHandler( async (req: Request, res: Response) => 
 router.get('/auth/callback', asyncHandler( async (req: Request, res: Response) => {
   const authCode = req.query.code as string;
   const stateFromCallback = req.query.state as string;
-  const sessionId = req.cookies.auth_session;
+
+  const cookies = cookie.parse(req.headers.cookie || '');
+  const sessionId = cookies.auth_session;
+  
 
   // Verify state matches to prevent CSRF
   if (!stateFromCallback || stateFromCallback !== sessionId) {
@@ -141,12 +146,14 @@ router.get('/auth/callback', asyncHandler( async (req: Request, res: Response) =
       `);
 
     // Set secure session cookie with just the session ID (not the token)
-    res.cookie('user_session', serverSessionId, {
+    res.setHeader('Set-Cookie', cookie.serialize('user_session', serverSessionId, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    });
+      path: '/',
+      maxAge: 24 * 60 * 60, // 24 hours
+    }));
+    
 
     // Redirect to frontend with successful login
     res.redirect(`${frontendOrigin}/`);
@@ -158,7 +165,9 @@ router.get('/auth/callback', asyncHandler( async (req: Request, res: Response) =
 
 // Get current user
 router.get('/auth/current-user', asyncHandler( async (req: Request, res: Response) => {
-  const sessionId = req.cookies.user_session;
+  const cookies = cookie.parse(req.headers.cookie || '');
+  const sessionId = cookies.user_session;
+
   
   if (!sessionId) {
     return res.status(401).json({ isAuthenticated: false });
@@ -178,7 +187,15 @@ router.get('/auth/current-user', asyncHandler( async (req: Request, res: Respons
 
     if (sessionResult.recordset.length === 0) {
       // Session not found or expired
-      res.clearCookie('user_session');
+      res.setHeader('Set-Cookie', cookie.serialize('user_session', '', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        path: '/',
+        expires: new Date(0),
+      }));
+      
+
       return res.status(401).json({ isAuthenticated: false });
     }
 
@@ -203,8 +220,10 @@ router.get('/auth/current-user', asyncHandler( async (req: Request, res: Respons
 // Logout 
 router.get('/auth/logout', asyncHandler( async (req: Request, res: Response) => {
   try {
-    const sessionId = req.cookies.user_session;
-    
+    const cookies = cookie.parse(req.headers.cookie || '');
+    const sessionId = cookies.user_session;
+
+
     if (sessionId) {
       // Remove session from database
       const pool = await poolPromise;
@@ -213,7 +232,14 @@ router.get('/auth/logout', asyncHandler( async (req: Request, res: Response) => 
         .query('DELETE FROM UserSessions WHERE session_id = @session_id');
       
       // Clear the cookie
-      res.clearCookie('user_session');
+      res.setHeader('Set-Cookie', cookie.serialize('user_session', '', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        path: '/',
+        expires: new Date(0),
+      }));
+      
     }
     
     // Redirect to Microsoft logout endpoint, then back to homepage
