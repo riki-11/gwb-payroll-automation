@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
 import router from './router'
+import authStore from './services/authStore'
 
 // Vuetify
 // TODO: fix vuetify styles
@@ -16,5 +17,16 @@ const vuetify = createVuetify({
   directives,
 })
 
+// Initialize authentication state before mounting the app
+const initApp = async () => {
+  // Initialize auth state by checking with the server
+  await authStore.init();
+  
+  // Create and mount Vue app
+  createApp(App)
+    .use(vuetify)
+    .use(router)
+    .mount('#app');
+};
 
-createApp(App).use(vuetify).use(router).mount('#app')
+initApp();
