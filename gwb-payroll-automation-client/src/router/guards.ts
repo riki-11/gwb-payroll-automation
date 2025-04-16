@@ -5,7 +5,7 @@ import { checkAuth } from '../api/api';
 // Authentication guard for protected routes
 export const authGuard = async (
   to: RouteLocationNormalized,
-  from: RouteLocationNormalized,
+  _from: RouteLocationNormalized, // TODO: Figure why this is necessary.
   next: NavigationGuardNext
 ) => {
   // Check if the route requires authentication
