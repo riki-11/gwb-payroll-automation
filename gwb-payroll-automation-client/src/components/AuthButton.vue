@@ -1,109 +1,71 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
 const isLoggedIn = ref(false);
-const accessToken = ref<string>('');
 const userName = ref<string | null>(null);
 const userEmail = ref<string | null>(null);
+const userRole = ref<string | null>(null);
+const loading = ref(false);
 
 const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
-
-const checkLoginStatus = () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-
-  if (token) {
-
-    console.log('I HAVE THE TOKEN!')
-
-    accessToken.value = token;
-    isLoggedIn.value = true;
-    // TODO: Use a better way of storing the token
-    localStorage.setItem('accessToken', token);
-
-    // Remove the token from the URL to keep it clean
-    // BUG: access token still shows up in URL.
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return true;
-  } else {
-    console.log('Token already stored!')
-    const savedToken = localStorage.getItem('accessToken');
-    
-    if (savedToken) {
-      accessToken.value = savedToken;
-      isLoggedIn.value = true;
-      return true;
-    } else {
-      console.log('No token exists. Logged out.')
-      isLoggedIn.value = false;
-      return false;
-    }
-  }
-};
-
-
-// TODO: Find a way to make the authentication less hard coded/client-side dependent
-
-const authenticateLogin = () => {
+// Handle Microsoft login
+const handleLogin = () => {
+  // Redirect to the server's login endpoint which will initiate Microsoft OAuth flow
   window.location.href = `${backendUrl}/auth/login`;
 };
 
-const authenticateLogout = () => {
-  // Clear all stored data
-  localStorage.clear();
-  sessionStorage.clear();
-
-  // Reset login state
-  isLoggedIn.value = false;
-  userName.value = null;
-  userEmail.value = null;
-  
-  // Redirect the browser to the backend logout route
+// Handle logout
+const handleLogout = () => {
+  // Redirect to the server's logout endpoint which will clear the session
   window.location.href = `${backendUrl}/auth/logout`;
-
 };
 
-
-const fetchUserDetails = async () => {
-  try { 
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
-    const response = await fetch(`${backendUrl}/auth/get-current-user`, {
-      headers: { Authorization: `Bearer ${token}` },
+// Check login status
+const checkLoginStatus = async () => {
+  try {
+    loading.value = true;
+    
+    // The server will use the session cookie to authenticate this request
+    const response = await axios.get(`${backendUrl}/auth/current-user`, {
+      withCredentials: true // Important: needed to send cookies with the request
     });
-
-    if (!response.ok) {
-      console.error('Failed to fetch user details');
-      return;
+    
+    if (response.data.isAuthenticated) {
+      isLoggedIn.value = true;
+      userName.value = response.data.user.name;
+      userEmail.value = response.data.user.email;
+      userRole.value = response.data.user.role;
+      return true;
+    } else {
+      isLoggedIn.value = false;
+      return false;
     }
-
-    const userData = await response.json();
-    accessToken.value = userData.accessToken;
-    userName.value = userData.name;
-    userEmail.value = userData.email;
-    isLoggedIn.value = true
   } catch (error) {
-    console.error(`Error fetching user details: ${error}`);
+    console.error('Failed to check authentication status:', error);
+    isLoggedIn.value = false;
+    return false;
+  } finally {
+    loading.value = false;
   }
-}
+};
 
 onMounted(() => {
-  if (checkLoginStatus()) {
-    fetchUserDetails();
-    console.log(`BACKEND URL: ${backendUrl} used with /auth/...`)
-  } else {
-    // TODO: Remove this in future.
-    console.log('Not currently logged in.');
-  }
-})
+  checkLoginStatus();
+});
 </script>
 
 <template>
   <v-container>
-    <span v-if="isLoggedIn" class="mr-4">{{ userName }} ({{ userEmail }})</span>
-    <v-btn v-if="!isLoggedIn" @click="authenticateLogin">Login</v-btn>
-    <v-btn v-else @click="authenticateLogout">Logout</v-btn>
+    <div v-if="loading">
+      <v-progress-circular indeterminate size="24" class="mr-2"></v-progress-circular>
+      Checking login status...
+    </div>
+    <div v-else>
+      <span v-if="isLoggedIn" class="mr-4">{{ userName }} ({{ userEmail }})</span>
+      <v-btn v-if="!isLoggedIn" @click="handleLogin">Login</v-btn>
+      <v-btn v-else @click="handleLogout">Logout</v-btn>
+    </div>
   </v-container>
 </template>

@@ -4,19 +4,20 @@ import nodemailer from 'nodemailer';
 import multer from 'multer';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { authMiddleware, requireRole } from './middleware/authMiddleware';
 
 dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Determine environment
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Get the frontend origin from environment variables
 const allowedOrigins = [
-  // TODO: Hide the frontend origins in production?
-  process.env.FRONTEND_ORIGIN_PROD || "https://gwb-payroll-automation-client.vercel.app/",
+  process.env.FRONTEND_ORIGIN_PROD || "https://gwb-payroll-automation-client.vercel.app",
   process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
 ];
 
@@ -24,12 +25,20 @@ const allowedOrigins = [
 app.use(cors({
   origin: allowedOrigins,
   methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true // Important: required for cookies to work cross-domain
 }));
 
+// Body parser middleware
 app.use(express.json());
+
+// Cookie parser middleware
+app.use(cookieParser());
+
+// Auth routes
 app.use(authRouter);
 
+// Multer setup for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -42,8 +51,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Request, res: Response) => {
-  
+// Protected route that requires authentication
+app.post('/api/send-payslip-to-email', authMiddleware, upload.single('file'), async (req: Request, res: Response) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded');
   }
@@ -85,6 +94,17 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
   }
 });
 
+// Admin-only route example
+app.get('/api/admin/users', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
+  // This route is protected and only accessible to admins
+  res.json({ message: 'This is admin-only content' });
+});
+
+// Health check endpoint
+app.get('/api/health', (req: Request, res: Response) => {
+  res.status(200).send('Server is running');
+});
+
 app.listen(port, () => {
-  console.log(`Local API running at http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });
