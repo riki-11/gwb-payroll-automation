@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authMiddleware, requireRole } from './middleware/authMiddleware';
+import { asyncHandler } from './utils/asyncHandler';
+
 
 dotenv.config();
 
@@ -52,7 +54,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Protected route that requires authentication
-app.post('/api/send-payslip-to-email', authMiddleware, upload.single('file'), async (req: Request, res: Response) => {
+app.post('/api/send-payslip-to-email', authMiddleware, upload.single('file'), asyncHandler(async (req: Request, res: Response)  => {
   if (!req.file) {
     return res.status(400).send('No file uploaded');
   }
@@ -92,13 +94,19 @@ app.post('/api/send-payslip-to-email', authMiddleware, upload.single('file'), as
   } catch (error) {
     res.status(500).json({ error: 'Failed to send email', details: error });
   }
-});
+}))
+;
 
 // Admin-only route example
-app.get('/api/admin/users', authMiddleware, requireRole('admin'), async (req: Request, res: Response) => {
-  // This route is protected and only accessible to admins
-  res.json({ message: 'This is admin-only content' });
-});
+app.get(
+  '/api/admin/users',
+  authMiddleware,
+  requireRole('admin'),
+  asyncHandler(async (req: Request, res: Response) => {
+    res.json({ message: 'This is admin-only content' });
+  })
+);
+
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
