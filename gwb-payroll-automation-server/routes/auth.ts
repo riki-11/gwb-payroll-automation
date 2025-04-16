@@ -4,6 +4,7 @@ import { ConfidentialClientApplication } from '@azure/msal-node';
 import { sql, poolPromise } from '../db';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
+import { asyncHandler } from '../utils/asyncHandler';
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ const frontendOrigin = isProduction
   : process.env.FRONTEND_ORIGIN_LOCAL!;
 
 // Microsoft login - start the flow
-router.get('/auth/login', async (req: Request, res: Response) => {
+router.get('/auth/login',  asyncHandler( async (req: Request, res: Response) => {
   try {
     // Create a server-side session ID
     const sessionId = uuidv4();
@@ -59,10 +60,10 @@ router.get('/auth/login', async (req: Request, res: Response) => {
     console.error('Error generating auth URL:', error);
     res.status(500).send('Authentication initialization failed');
   }
-});
+}));
 
 // Handle the callback
-router.get('/auth/callback', async (req: Request, res: Response) => {
+router.get('/auth/callback', asyncHandler( async (req: Request, res: Response) => {
   const authCode = req.query.code as string;
   const stateFromCallback = req.query.state as string;
   const sessionId = req.cookies.auth_session;
@@ -153,10 +154,10 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
     console.error('Error during token acquisition:', error);
     res.status(500).send('Authentication failed');
   }
-});
+}));
 
 // Get current user
-router.get('/auth/current-user', async (req: Request, res: Response) => {
+router.get('/auth/current-user', asyncHandler( async (req: Request, res: Response) => {
   const sessionId = req.cookies.user_session;
   
   if (!sessionId) {
@@ -197,10 +198,10 @@ router.get('/auth/current-user', async (req: Request, res: Response) => {
     console.error('Error getting current user:', error);
     res.status(500).json({ error: 'Failed to authenticate user' });
   }
-});
+}));
 
 // Logout 
-router.get('/auth/logout', async (req: Request, res: Response) => {
+router.get('/auth/logout', asyncHandler( async (req: Request, res: Response) => {
   try {
     const sessionId = req.cookies.user_session;
     
@@ -222,6 +223,6 @@ router.get('/auth/logout', async (req: Request, res: Response) => {
     console.error('Error during logout:', error);
     res.status(500).send('Logout failed');
   }
-});
+}));
 
 export default router;

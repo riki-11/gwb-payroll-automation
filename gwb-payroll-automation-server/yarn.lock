@@ -565,7 +565,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:>=18":
+"@types/node@npm:>=18, @types/node@npm:^22.14.1":
   version: 22.14.1
   resolution: "@types/node@npm:22.14.1"
   dependencies:
@@ -1885,6 +1885,7 @@ __metadata:
     "@types/express": "npm:^5.0.0"
     "@types/mssql": "npm:^9.1.7"
     "@types/multer": "npm:^1.4.12"
+    "@types/node": "npm:^22.14.1"
     "@types/nodemailer": "npm:^6.4.17"
     "@types/uuid": "npm:^10.0.0"
     "@vercel/node": "npm:^5.0.2"

@@ -1,6 +1,7 @@
 // middleware/authMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import { sql, poolPromise } from '../db';
+import { asyncHandler } from '../utils/asyncHandler';
 
 // Extend Express Request type to include user property
 declare global {
@@ -18,7 +19,8 @@ declare global {
 }
 
 // Middleware to check authentication with session cookie
-const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+// TODO: remove try-catch?
+const authMiddleware =  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
     const sessionId = req.cookies.user_session;
 
@@ -67,7 +69,7 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     console.error('Authentication middleware error:', error);
     res.status(500).json({ error: 'Authentication check failed' });
   }
-};
+});
 
 // Middleware to check for specific roles
 const requireRole = (roles: string | string[]) => {
