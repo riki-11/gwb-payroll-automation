@@ -1,0 +1,15 @@
+{
+  "projectId": "prj_ODPqM2PuQkXr8vbpVTGDeVr797NJ",
+  "orgId": "team_ezaRDIxmuMyylcHQRVNyRKCc",
+  "settings": {
+    "createdAt": 1736674535497,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": "yarn install",
+    "buildCommand": "yarn build",
+    "outputDirectory": null,
+    "rootDirectory": "gwb-payroll-automation-client",
+    "directoryListing": false,
+    "nodeVersion": "22.x"
+  }
+}
