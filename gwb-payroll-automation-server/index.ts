@@ -56,14 +56,16 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn(`CORS blocked request from origin: ${origin}`);
       callback(new Error(`Not allowed by CORS: ${origin} not in allowed list`));
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposedHeaders: ["Set-Cookie"],
   credentials: true // This is important for cookies
 }));
 
@@ -206,6 +208,9 @@ const startServer = async () => {
     }
   }
 };
+
+// For options requests (preflight)
+app.options('*', cors());
 
 // Start the server
 startServer();

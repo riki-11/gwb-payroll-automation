@@ -8,8 +8,37 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true // Important: this enables sending cookies with cross-origin requests
+  withCredentials: true, // Important: this enables sending cookies with cross-origin requests
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 });
+
+// Add response interceptor to handle common errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Log the error for debugging
+    console.error('API Error:', error);
+    
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.log('Error data:', error.response.data);
+      console.log('Error status:', error.response.status);
+      console.log('Error headers:', error.response.headers);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.log('Error request:', error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.log('Error message:', error.message);
+    }
+    
+    // CORS errors don't typically reach this interceptor,
+    // but we can still pass the error down for handling
+    return Promise.reject(error);
+  }
+);
 
 export const checkAuthStatus = async () => {
   return api.get('/auth/status');

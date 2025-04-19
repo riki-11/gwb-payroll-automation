@@ -32,13 +32,14 @@ const frontendOrigin = isProduction
   ? process.env.FRONTEND_ORIGIN_PROD!
   : process.env.FRONTEND_ORIGIN_LOCAL!;
 
-// Define cookie options
+// Define cookie options for production environment
 const cookieOptions = {
   httpOnly: true,
   secure: isProduction, // true in production, false in development
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  sameSite: isProduction ? 'none' : 'lax',
+  sameSite: isProduction ? 'none' : 'lax', // 'none' is required for cross-site cookies in secure contexts
   path: '/',
+  domain: isProduction ? process.env.COOKIE_DOMAIN || undefined : undefined, // Optional: set specific domain if needed
 };
 
 // Helper function to set cookies that works in all environments
@@ -55,11 +56,20 @@ const setCookie = (res: Response, name: string, value: string, options: any) => 
     if (options.secure) cookieParts.push('Secure');
     if (options.maxAge) cookieParts.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`);
     if (options.path) cookieParts.push(`Path=${options.path}`);
-    if (options.sameSite) cookieParts.push(`SameSite=${options.sameSite}`);
+    
+    // For cross-origin cookies in secure contexts, SameSite=None is required
+    if (options.sameSite) {
+      cookieParts.push(`SameSite=${options.sameSite}`);
+    }
+    
+    if (options.domain) cookieParts.push(`Domain=${options.domain}`);
     
     const cookieString = cookieParts.join('; ');
     res.setHeader('Set-Cookie', cookieString);
   }
+  
+  // Debug cookie setting
+  console.log(`Setting cookie: ${name} with options:`, JSON.stringify(options));
 };
 
 // Helper function to clear cookies
