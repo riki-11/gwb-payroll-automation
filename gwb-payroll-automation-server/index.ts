@@ -22,6 +22,11 @@ const allowedOrigins = [
   process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
 ];
 
+console.log('Starting server with the following configuration:');
+console.log(`- Environment: ${isProduction ? 'Production' : 'Development'}`);
+console.log(`- Allowed Origins: ${allowedOrigins.join(', ')}`);
+console.log(`- Cosmos DB Endpoint: ${process.env.COSMOS_DB_ENDPOINT ? 'Set' : 'Not Set'}`);
+
 // Enable CORS for all routes based on environment
 app.use(cors({
   origin: (origin, callback) => {
@@ -31,7 +36,7 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error(`Not allowed by CORS: ${origin} not in allowed list`));
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -44,6 +49,15 @@ app.use(cookieParser());
 
 // Parse JSON request bodies
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: isProduction ? 'production' : 'development'
+  });
+});
 
 // Mount auth routes
 app.use(authRouter);
@@ -104,6 +118,15 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
   }
 });
 
+// Error handling middleware
+app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: isProduction ? 'An unexpected error occurred' : err.message
+  });
+});
+
 // Schedule cleanup of expired sessions (run once per day)
 const scheduleSessionCleanup = () => {
   setInterval(async () => {
@@ -118,8 +141,10 @@ const scheduleSessionCleanup = () => {
 // Start the server
 const startServer = async () => {
   try {
-    // Initialize Cosmos DB service
+    console.log('Initializing Cosmos DB service...');
+    // Explicitly initialize Cosmos DB service
     await cosmosDbService.init();
+    console.log('Cosmos DB service initialized successfully');
     
     // Start session cleanup scheduler
     scheduleSessionCleanup();
@@ -130,7 +155,14 @@ const startServer = async () => {
     });
   } catch (error) {
     console.error('Failed to start server:', error);
-    process.exit(1);
+    console.error('Error details:', error);
+    
+    // Don't exit in production - let the platform handle restarts
+    if (!isProduction) {
+      process.exit(1);
+    } else {
+      console.log('Continuing despite initialization error...');
+    }
   }
 };
 

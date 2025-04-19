@@ -19,6 +19,8 @@ class CosmosDbService {
   private client: CosmosClient;
   private database: Database | undefined;
   private usersContainer: Container | undefined;
+  private initialized: boolean = false;
+  private initPromise: Promise<void> | null = null;
 
   constructor() {
     // Get Cosmos DB configuration from environment variables
@@ -38,30 +40,59 @@ class CosmosDbService {
       endpoint: cosmosDbEndpoint,
       key: cosmosDbKey
     });
+    
+    // Start initialization immediately in the constructor
+    this.initPromise = this.initialize();
   }
 
-  async init(): Promise<void> {
+  private async initialize(): Promise<void> {
     try {
+      console.log('Initializing Cosmos DB service...');
+      
       // Get a reference to the database
       this.database = this.client.database('payroll');
       
       // Get a reference to the users container
       this.usersContainer = this.database.container('users');
       
+      this.initialized = true;
       console.log('Connected to Cosmos DB successfully');
     } catch (error) {
       console.error('Error initializing Cosmos DB:', error);
+      this.initialized = false;
       throw error;
+    }
+  }
+
+  async init(): Promise<void> {
+    // If initialization is already in progress, wait for it
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+    
+    // If not initialized yet, start initialization
+    if (!this.initialized) {
+      this.initPromise = this.initialize();
+      return this.initPromise;
+    }
+  }
+
+  // Helper method to ensure DB is initialized before operations
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized) {
+      await this.init();
+    }
+    
+    if (!this.usersContainer) {
+      throw new Error('Users container is not initialized');
     }
   }
 
   async createUserSession(userSession: UserSession): Promise<UserSession> {
     try {
-      if (!this.usersContainer) {
-        throw new Error('Users container is not initialized');
-      }
+      await this.ensureInitialized();
       
-      const { resource } = await this.usersContainer.items.create(userSession);
+      const { resource } = await this.usersContainer!.items.create(userSession);
       return resource as UserSession;
     } catch (error) {
       console.error('Error creating user session:', error);
@@ -71,11 +102,9 @@ class CosmosDbService {
 
   async getUserSessionById(sessionId: string): Promise<UserSession | undefined> {
     try {
-      if (!this.usersContainer) {
-        throw new Error('Users container is not initialized');
-      }
+      await this.ensureInitialized();
 
-      const { resource } = await this.usersContainer.item(sessionId, sessionId).read();
+      const { resource } = await this.usersContainer!.item(sessionId, sessionId).read();
       return resource as UserSession;
     } catch (error) {
       if ((error as any).code === 404) {
@@ -88,9 +117,7 @@ class CosmosDbService {
 
   async getUserSessionByEmail(email: string): Promise<UserSession | undefined> {
     try {
-      if (!this.usersContainer) {
-        throw new Error('Users container is not initialized');
-      }
+      await this.ensureInitialized();
 
       const querySpec = {
         query: 'SELECT * FROM c WHERE c.email = @email ORDER BY c.createdAt DESC',
@@ -102,7 +129,7 @@ class CosmosDbService {
         ]
       };
 
-      const { resources } = await this.usersContainer.items.query(querySpec).fetchAll();
+      const { resources } = await this.usersContainer!.items.query(querySpec).fetchAll();
       
       if (resources.length > 0) {
         return resources[0] as UserSession;
@@ -117,12 +144,10 @@ class CosmosDbService {
 
   async updateUserSession(sessionId: string, updates: Partial<UserSession>): Promise<UserSession | undefined> {
     try {
-      if (!this.usersContainer) {
-        throw new Error('Users container is not initialized');
-      }
+      await this.ensureInitialized();
 
       // First get the current document
-      const { resource: existingSession } = await this.usersContainer.item(sessionId, sessionId).read();
+      const { resource: existingSession } = await this.usersContainer!.item(sessionId, sessionId).read();
       
       if (!existingSession) {
         return undefined;
@@ -132,7 +157,7 @@ class CosmosDbService {
       const updatedSession = { ...existingSession, ...updates };
       
       // Replace the document
-      const { resource } = await this.usersContainer.item(sessionId, sessionId).replace(updatedSession);
+      const { resource } = await this.usersContainer!.item(sessionId, sessionId).replace(updatedSession);
       return resource as UserSession;
     } catch (error) {
       console.error('Error updating user session:', error);
@@ -142,12 +167,15 @@ class CosmosDbService {
 
   async deleteUserSession(sessionId: string): Promise<void> {
     try {
-      if (!this.usersContainer) {
-        throw new Error('Users container is not initialized');
-      }
+      await this.ensureInitialized();
 
-      await this.usersContainer.item(sessionId, sessionId).delete();
+      await this.usersContainer!.item(sessionId, sessionId).delete();
     } catch (error) {
+      if ((error as any).code === 404) {
+        // If the session doesn't exist, consider it already deleted
+        console.log(`Session ${sessionId} not found for deletion - already deleted or never existed`);
+        return;
+      }
       console.error('Error deleting user session:', error);
       throw error;
     }
@@ -155,9 +183,7 @@ class CosmosDbService {
 
   async cleanupExpiredSessions(): Promise<void> {
     try {
-      if (!this.usersContainer) {
-        throw new Error('Users container is not initialized');
-      }
+      await this.ensureInitialized();
 
       const now = Date.now();
       const querySpec = {
@@ -170,10 +196,10 @@ class CosmosDbService {
         ]
       };
 
-      const { resources: expiredSessions } = await this.usersContainer.items.query(querySpec).fetchAll();
+      const { resources: expiredSessions } = await this.usersContainer!.items.query(querySpec).fetchAll();
       
       for (const session of expiredSessions) {
-        await this.usersContainer.item(session.id, session.id).delete();
+        await this.usersContainer!.item(session.id, session.id).delete();
       }
       
       console.log(`Cleaned up ${expiredSessions.length} expired sessions`);
