@@ -1,6 +1,10 @@
+// gwb-payroll-automation-server/routes/auth.ts
 import express, { Request, Response } from 'express';
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import dotenv from 'dotenv';
+import { v4 as uuidv4 } from 'uuid';
+import cosmosDbService, { UserSession } from '../services/cosmosDbService';
+import { requireAuth } from '../middleware/authMiddleware';
 
 dotenv.config();
 
@@ -28,6 +32,14 @@ const frontendOrigin = isProduction
   ? process.env.FRONTEND_ORIGIN_PROD!
   : process.env.FRONTEND_ORIGIN_LOCAL!;
 
+// Define cookie options
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction, // true in production, false in development
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  sameSite: isProduction ? 'none' as const : 'lax' as const,
+};
+
 // Microsoft login
 router.get('/auth/login', async (req: Request, res: Response) => {
   const authUrl = await msalClient.getAuthCodeUrl({
@@ -53,18 +65,45 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
       redirectUri,
     });
 
-    // Extract access token
+    // Extract tokens
     const accessToken = tokenResponse.accessToken;
+    // Check if we have refresh token information (may be in different properties depending on MSAL version)
+    // @ts-ignore - handle potential differences in MSAL types
+    const refreshToken = tokenResponse.refreshToken || null;
+    const expiresOn = tokenResponse.expiresOn!.getTime();
 
     // Fetch user details from Microsoft Graph API
     const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
+    if (!userResponse.ok) {
+      throw new Error('Failed to fetch user data from Microsoft Graph');
+    }
 
     const userData = await userResponse.json();
-    // Redirect to the frontend with the access token
-    res.redirect(`${frontendOrigin}/?token=${accessToken}`);
+
+    // Create a unique session ID
+    const sessionId = uuidv4();
+
+    // Store session in Cosmos DB
+    const userSession: UserSession = {
+      id: sessionId,
+      email: userData.mail || userData.userPrincipalName,
+      name: userData.displayName,
+      accessToken,
+      refreshToken,
+      expiresOn,
+      createdAt: Date.now()
+    };
+
+    await cosmosDbService.createUserSession(userSession);
+
+    // Set a session cookie
+    res.cookie('sessionId', sessionId, cookieOptions);
+
+    // Redirect to the frontend without the token in URL
+    res.redirect(frontendOrigin);
   } catch (error) {
     console.error('Error during token acquisition:', error);
     res.status(500).send('Authentication failed');
@@ -74,14 +113,19 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
 // Logout 
 router.get('/auth/logout', async (req: Request, res: Response) => {
   try {
-    // logout endpoint
+    // Get session ID from cookie
+    const sessionId = req.cookies?.sessionId;
+    
+    // If there's a session ID, delete it from the database
+    if (sessionId) {
+      await cosmosDbService.deleteUserSession(sessionId);
+    }
+    
+    // Clear the session cookie
+    res.clearCookie('sessionId');
+    
+    // Redirect to Microsoft logout endpoint, then back to homepage
     const logoutUrl = `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/logout`;
-
-    // Optionally clear session on your side if you're maintaining one
-    // For example:
-    // req.session.destroy();
-
-    // redirect to Microsoft logout endpoint, then back to homepage.
     res.redirect(`${logoutUrl}?post_logout_redirect_uri=${frontendOrigin}`);
   } catch (error) {
     console.error('Error during logout:', error);
@@ -89,35 +133,95 @@ router.get('/auth/logout', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/auth/get-current-user', async (req: Request, res: Response) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).send('Unauthorized');
-  } 
-
-  const accessToken = authHeader.split(' ')[1];
-
+// Get current user details (protected route)
+router.get('/auth/get-current-user', requireAuth, async (req: Request, res: Response) => {
   try {
-    // Fetch details from Microsoft Graph API
-    const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
-      headers: { Authorization: `Bearer ${accessToken}`},
-    });
-
-    if (!userResponse.ok) {
-      return res.status(userResponse.status).json({ error: 'Failed to fetch user details' });
+    // The user is already set in the request object by the middleware
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
     }
-
-    const userData = await userResponse.json();
+    
+    // Send back user info without exposing tokens
     res.json({
-      accessToken: accessToken,
-      name: userData.displayName,
-      email: userData.mail
+      name: req.user.name,
+      email: req.user.email,
+      isAuthenticated: true
     });
   } catch (error) {
     console.error('Error fetching user details:', error);
-    res.status(500).send('Error fetching user details');
+    res.status(500).json({ error: 'Error fetching user details' });
+  }
+});
+
+// Check authentication status (public route)
+router.get('/auth/status', async (req: Request, res: Response) => {
+  try {
+    // Get session ID from cookie
+    const sessionId = req.cookies?.sessionId;
+    
+    if (!sessionId) {
+      return res.json({ isAuthenticated: false });
+    }
+    
+    // Find the session in Cosmos DB
+    const userSession = await cosmosDbService.getUserSessionById(sessionId);
+    
+    if (!userSession || userSession.expiresOn < Date.now()) {
+      // Clear invalid cookie
+      res.clearCookie('sessionId');
+      return res.json({ isAuthenticated: false });
+    }
+    
+    // User is authenticated
+    res.json({
+      isAuthenticated: true,
+      name: userSession.name,
+      email: userSession.email
+    });
+  } catch (error) {
+    console.error('Error checking auth status:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Refresh token endpoint (protected route)
+router.post('/auth/refresh-token', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.cookies?.sessionId;
+    if (!sessionId) {
+      return res.status(401).json({ error: 'No session found' });
+    }
+    
+    const userSession = await cosmosDbService.getUserSessionById(sessionId);
+    if (!userSession || !userSession.refreshToken) {
+      return res.status(401).json({ error: 'Invalid session or missing refresh token' });
+    }
+    
+    // Use MSAL to get a new access token using the refresh token
+    const tokenResponse = await msalClient.acquireTokenByRefreshToken({
+      refreshToken: userSession.refreshToken,
+      scopes: process.env.OAUTH_SCOPES!.split(' '),
+    });
+    
+    if (!tokenResponse || !tokenResponse.accessToken) {
+      return res.status(401).json({ error: 'Failed to refresh token' });
+    }
+    
+    // Update the session in Cosmos DB with new token
+    // @ts-ignore - handle potential differences in MSAL types
+    const newRefreshToken = tokenResponse.refreshToken || userSession.refreshToken;
+    
+    await cosmosDbService.updateUserSession(sessionId, {
+      accessToken: tokenResponse.accessToken,
+      refreshToken: newRefreshToken,
+      expiresOn: tokenResponse.expiresOn!.getTime()
+    });
+    
+    res.json({ success: true, message: 'Token refreshed successfully' });
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+    res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
 
 export default router;
-
