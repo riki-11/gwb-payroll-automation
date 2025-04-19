@@ -16,6 +16,19 @@ declare global {
   }
 }
 
+// Helper function to clear cookies similar to the one in auth.ts
+const clearCookie = (res: Response, name: string) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  if (typeof res.clearCookie === 'function') {
+    res.clearCookie(name);
+  } else {
+    // Expire the cookie immediately
+    const cookieValue = `${name}=; HttpOnly; ${isProduction ? 'Secure; ' : ''}Path=/; Max-Age=0; SameSite=${isProduction ? 'None' : 'Lax'}`;
+    res.setHeader('Set-Cookie', cookieValue);
+  }
+};
+
 /**
  * Middleware to check if user is authenticated via session cookie
  */
@@ -25,6 +38,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     const sessionId = req.cookies?.sessionId;
     
     if (!sessionId) {
+      console.log('No session ID found in cookies');
       return res.status(401).json({ error: 'Authentication required' });
     }
     
@@ -32,16 +46,18 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     const userSession = await cosmosDbService.getUserSessionById(sessionId);
     
     if (!userSession) {
+      console.log(`Session ID ${sessionId} not found in database`);
       // Clear the invalid cookie
-      res.clearCookie('sessionId');
+      clearCookie(res, 'sessionId');
       return res.status(401).json({ error: 'Invalid session' });
     }
     
     // Check if the session has expired
     if (userSession.expiresOn < Date.now()) {
+      console.log(`Session ID ${sessionId} has expired`);
       // Delete expired session from DB
       await cosmosDbService.deleteUserSession(sessionId);
-      res.clearCookie('sessionId');
+      clearCookie(res, 'sessionId');
       return res.status(401).json({ error: 'Session expired' });
     }
     

@@ -37,7 +37,45 @@ const cookieOptions = {
   httpOnly: true,
   secure: isProduction, // true in production, false in development
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
-  sameSite: isProduction ? 'none' as const : 'lax' as const,
+  sameSite: isProduction ? 'none' : 'lax',
+  path: '/',
+};
+
+// Helper function to set cookies that works in all environments
+const setCookie = (res: Response, name: string, value: string, options: any) => {
+  // Check if res.cookie function exists (standard Express)
+  if (typeof res.cookie === 'function') {
+    res.cookie(name, value, options);
+  } else {
+    // Fallback for environments where res.cookie is not available (like some serverless)
+    const cookieValue = `${name}=${value}`;
+    const cookieParts = [cookieValue];
+    
+    if (options.httpOnly) cookieParts.push('HttpOnly');
+    if (options.secure) cookieParts.push('Secure');
+    if (options.maxAge) cookieParts.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`);
+    if (options.path) cookieParts.push(`Path=${options.path}`);
+    if (options.sameSite) cookieParts.push(`SameSite=${options.sameSite}`);
+    
+    const cookieString = cookieParts.join('; ');
+    res.setHeader('Set-Cookie', cookieString);
+  }
+};
+
+// Helper function to clear cookies
+const clearCookie = (res: Response, name: string) => {
+  if (typeof res.clearCookie === 'function') {
+    res.clearCookie(name);
+  } else {
+    // Expire the cookie immediately
+    setCookie(res, name, '', {
+      httpOnly: true,
+      secure: isProduction,
+      maxAge: 0,
+      path: '/',
+      sameSite: isProduction ? 'none' : 'lax',
+    });
+  }
 };
 
 // Microsoft login
@@ -99,8 +137,13 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
 
     await cosmosDbService.createUserSession(userSession);
 
-    // Set a session cookie
-    res.cookie('sessionId', sessionId, cookieOptions);
+    // Set a session cookie using our helper function
+    setCookie(res, 'sessionId', sessionId, cookieOptions);
+
+    // For debugging, output what's happening
+    console.log(`Authentication successful for user: ${userData.displayName}`);
+    console.log(`Session ID ${sessionId} stored in Cosmos DB`);
+    console.log(`Redirecting to frontend: ${frontendOrigin}`);
 
     // Redirect to the frontend without the token in URL
     res.redirect(frontendOrigin);
@@ -121,8 +164,8 @@ router.get('/auth/logout', async (req: Request, res: Response) => {
       await cosmosDbService.deleteUserSession(sessionId);
     }
     
-    // Clear the session cookie
-    res.clearCookie('sessionId');
+    // Clear the session cookie using our helper function
+    clearCookie(res, 'sessionId');
     
     // Redirect to Microsoft logout endpoint, then back to homepage
     const logoutUrl = `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/logout`;
@@ -168,7 +211,7 @@ router.get('/auth/status', async (req: Request, res: Response) => {
     
     if (!userSession || userSession.expiresOn < Date.now()) {
       // Clear invalid cookie
-      res.clearCookie('sessionId');
+      clearCookie(res, 'sessionId');
       return res.json({ isAuthenticated: false });
     }
     

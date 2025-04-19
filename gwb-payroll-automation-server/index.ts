@@ -27,6 +27,29 @@ console.log(`- Environment: ${isProduction ? 'Production' : 'Development'}`);
 console.log(`- Allowed Origins: ${allowedOrigins.join(', ')}`);
 console.log(`- Cosmos DB Endpoint: ${process.env.COSMOS_DB_ENDPOINT ? 'Set' : 'Not Set'}`);
 
+// Custom middleware to parse cookies if cookie-parser is not available
+const customCookieParser = (req: Request, res: Response, next: express.NextFunction) => {
+  if (req.cookies) {
+    // cookie-parser already did its job
+    return next();
+  }
+  
+  const cookies: Record<string, string> = {};
+  const cookieHeader = req.headers.cookie;
+  
+  if (cookieHeader) {
+    cookieHeader.split(';').forEach(cookie => {
+      const parts = cookie.split('=');
+      const key = parts[0].trim();
+      const value = parts.slice(1).join('=').trim();
+      cookies[key] = value;
+    });
+  }
+  
+  req.cookies = cookies;
+  next();
+};
+
 // Enable CORS for all routes based on environment
 app.use(cors({
   origin: (origin, callback) => {
@@ -44,8 +67,14 @@ app.use(cors({
   credentials: true // This is important for cookies
 }));
 
-// Parse cookies
-app.use(cookieParser());
+// Try to use cookie-parser, and if it fails, use our custom parser
+try {
+  app.use(cookieParser());
+  console.log('Cookie parser middleware initialized');
+} catch (error) {
+  console.warn('Failed to initialize cookie-parser, using custom cookie parser:', error);
+  app.use(customCookieParser);
+}
 
 // Parse JSON request bodies
 app.use(express.json());
@@ -55,7 +84,19 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: isProduction ? 'production' : 'development'
+    environment: isProduction ? 'production' : 'development',
+    cookies: req.cookies ? 'working' : 'not working'
+  });
+});
+
+// Debug endpoint to check cookies
+app.get('/debug/cookies', (req, res) => {
+  res.status(200).json({
+    cookies: req.cookies || {},
+    hasCookieParser: typeof req.cookies !== 'undefined',
+    headers: {
+      cookie: req.headers.cookie,
+    }
   });
 });
 
