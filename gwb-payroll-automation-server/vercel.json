@@ -16,7 +16,7 @@
         "dest": "/index.ts",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "headers": {
-          "Access-Control-Allow-Origin": "https://gwb-payroll-automation-client.vercel.app/",
+          "Access-Control-Allow-Origin": "https://gwb-payroll-automation-client.vercel.app",
           "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type,Authorization,multipart/form-data,Cookie",
           "Access-Control-Allow-Credentials": "true"
@@ -27,7 +27,7 @@
         "dest": "routes/auth.ts",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "headers": {
-          "Access-Control-Allow-Origin": "https://gwb-payroll-automation-client.vercel.app/",
+          "Access-Control-Allow-Origin": "https://gwb-payroll-automation-client.vercel.app",
           "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type,Authorization,multipart/form-data,Cookie",
           "Access-Control-Allow-Credentials": "true"

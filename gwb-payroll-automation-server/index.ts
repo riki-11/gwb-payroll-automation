@@ -17,7 +17,7 @@ const port = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 // Get the frontend origin from environment variables
 const allowedOrigins = [
-  process.env.FRONTEND_ORIGIN_PROD || "https://gwb-payroll-automation-client.vercel.app/",
+  process.env.FRONTEND_ORIGIN_PROD || "https://gwb-payroll-automation-client.vercel.app",
   process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
 ];
 
