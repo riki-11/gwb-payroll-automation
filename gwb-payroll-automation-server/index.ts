@@ -21,12 +21,21 @@ const allowedOrigins = [
   process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
 ];
 
-console.log('Starting server with the following configuration:');
-console.log(`- Environment: ${isProduction ? 'Production' : 'Development'}`);
-console.log(`- Allowed Origins: ${allowedOrigins.join(', ')}`);
-console.log(`- Cosmos DB Endpoint: ${process.env.COSMOS_DB_ENDPOINT ? 'Set' : 'Not Set'}`);
+// Initialize multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Nodemailer transporter
+const transporter = nodemailer.createTransport({
+  service: 'hotmail',
+  auth: {
+    user: process.env.OUTLOOK_EMAIL,
+    pass: process.env.OUTLOOK_PASSWORD,
+  },
+});
 
 // Custom middleware to parse cookies if cookie-parser is not available
+// TODO: determine if still needed
 const customCookieParser = (req: Request, res: Response, next: express.NextFunction) => {
   if (req.cookies) {
     // cookie-parser already did its job
@@ -80,6 +89,18 @@ try {
 // Parse JSON request bodies
 app.use(express.json());
 
+// Mount auth routes
+app.use(authRouter);
+
+// Error handling middleware
+app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: isProduction ? 'An unexpected error occurred' : err.message
+  });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -91,6 +112,7 @@ app.get('/health', (req, res) => {
 });
 
 // Debug endpoint to check cookies
+// TODO: remove this route.
 app.get('/debug/cookies', (req, res) => {
   res.status(200).json({
     cookies: req.cookies || {},
@@ -101,21 +123,6 @@ app.get('/debug/cookies', (req, res) => {
   });
 });
 
-// Mount auth routes
-app.use(authRouter);
-
-// Initialize multer for file uploads
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-// Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: 'hotmail',
-  auth: {
-    user: process.env.OUTLOOK_EMAIL,
-    pass: process.env.OUTLOOK_PASSWORD,
-  },
-});
 
 // API route for sending payslips
 app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Request, res: Response) => {
@@ -125,7 +132,7 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
 
   // Create mail options object
   const mailOptions: nodemailer.SendMailOptions = {
-    from: process.env.OUTLOOK_EMAIL,
+    from: req.body.from,
     to: req.body.to,
     subject: req.body.subject,
     attachments: [
@@ -160,14 +167,7 @@ app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Reques
   }
 });
 
-// Error handling middleware
-app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: isProduction ? 'An unexpected error occurred' : err.message
-  });
-});
+
 
 // Schedule cleanup of expired sessions (run once per day)
 const scheduleSessionCleanup = () => {

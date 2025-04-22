@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import XLSX from 'xlsx';
+import { useUserStore } from '../stores/userStore';
  
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
@@ -93,16 +94,25 @@ function clearTableData() {
 
 const sendPayslipToEmployee = async (email: string) => {
   const payslip = payslipFiles.value[email];
+  const userStore = useUserStore();
+  const userEmail = userStore.getUserEmail;
+
   if (!payslip) {
     console.error(`No payslip found for email: ${email}`);
     return;
   }
 
+  if (userStore.getUserEmail == '') {
+    console.error("Sender's email not found.");
+    return;
+  }
+  
   try {
     loadingStates.value[email] = true;
 
     // Create FormData and append necessary fields
     const formData = new FormData();
+    formData.append('from', userEmail);
     formData.append('to', email);
     formData.append('subject', emailSubject.value);
     formData.append('html', fullEmailContent.value); // Use the combined content
@@ -121,7 +131,16 @@ const sendPayslipToEmployee = async (email: string) => {
 
 
 const sendAllPayslips = async () => {
+  // Grab user email from getCurrentUser route:
   try {
+    const userStore = useUserStore();
+    const userEmail = userStore.getUserEmail;
+
+    if (userStore.getUserEmail == '') {
+      console.error("Sender's email not found.");
+      return;
+    }
+
     const emailPromises = tableData.value.map(async row => {
       const email = row['Email'];
       const payslip = payslipFiles.value[email];
@@ -132,6 +151,7 @@ const sendAllPayslips = async () => {
           loadingStates.value[email] = true;
 
           const formData = new FormData();
+          formData.append('from', userEmail)
           formData.append('to', email);
           formData.append('subject', emailSubject.value);
           formData.append('html', fullEmailContent.value); // Use the combined content

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import { useUserStore } from '../stores/userStore';
 
 const isLoggedIn = ref(false);
 const userName = ref<string | null>(null);
@@ -15,18 +16,27 @@ const checkAuthStatus = async () => {
     isLoading.value = true;
     
     // Make a request to the auth status endpoint with credentials
+    // TODO: why is it axios herre instead of calling a function.
     const response = await axios.get(`${backendUrl}/auth/status`, {
       withCredentials: true // Important for sending cookies
     });
     
+    // Also store user info in Pinia store
+    const userStore = useUserStore();
+
     if (response.data.isAuthenticated) {
       isLoggedIn.value = true;
       userName.value = response.data.name;
       userEmail.value = response.data.email;
+
+      userStore.setUserInfo(response.data.email, response.data.name);
+
     } else {
       isLoggedIn.value = false;
       userName.value = null;
       userEmail.value = null;
+
+      userStore.clearUserInfo();
     }
   } catch (error) {
     console.error('Error checking authentication status:', error);

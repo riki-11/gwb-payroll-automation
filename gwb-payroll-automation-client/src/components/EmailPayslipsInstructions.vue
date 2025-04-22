@@ -2,9 +2,10 @@
 import {ref} from 'vue';
 
 const instructions = ref<string[]>([
-  'Step 1: Upload the .XLSX file containing employee emails.',
-  'Step 2: Attach the corresponding payslips for each employee.',
-  'Step 3: Send payslip emails individually or in bulk.'
+  'Step 1: Login to your GWB Microsoft account.',
+  'Step 2: Upload the .XLSX file containing employee emails.',
+  'Step 3: Attach the corresponding payslips for each employee.',
+  'Step 4: Send payslip emails individually or in bulk.'
 ]);
 </script>
 
