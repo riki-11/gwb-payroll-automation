@@ -1,4 +1,3 @@
-// gwb-payroll-automation-server/routes/auth.ts
 import express, { Request, Response } from 'express';
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import dotenv from 'dotenv';
