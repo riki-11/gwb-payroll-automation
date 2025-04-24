@@ -1,7 +1,5 @@
 // gwb-payroll-automation-server/index.ts
 import express, { Request, Response } from 'express';
-import nodemailer from 'nodemailer';
-import multer from 'multer';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -21,19 +19,6 @@ const allowedOrigins = [
   process.env.FRONTEND_ORIGIN_PROD || "https://gwb-payroll-automation-client.vercel.app",
   process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
 ];
-
-// Initialize multer for file uploads
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-// Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: 'hotmail',
-  auth: {
-    user: process.env.OUTLOOK_EMAIL,
-    pass: process.env.OUTLOOK_PASSWORD,
-  },
-});
 
 // Custom middleware to parse cookies if cookie-parser is not available
 // TODO: determine if still needed
@@ -125,52 +110,6 @@ app.get('/debug/cookies', (req, res) => {
     }
   });
 });
-
-
-// API route for sending payslips
-app.post('/api/send-payslip-to-email', upload.single('file'), async (req: Request, res: Response) => {
-  if (!req.file) {
-    return res.status(400).send('No file uploaded');
-  }
-
-  // Create mail options object
-  const mailOptions: nodemailer.SendMailOptions = {
-    from: req.body.from,
-    to: req.body.to,
-    subject: req.body.subject,
-    attachments: [
-      {
-        filename: req.file.originalname,
-        content: req.file.buffer,
-      },
-    ],
-  };
-
-  // Check if HTML content was provided
-  if (req.body.html) {
-    mailOptions.html = req.body.html;
-    
-    // Also include plaintext version as fallback for email clients that don't support HTML
-    if (req.body.text) {
-      mailOptions.text = req.body.text;
-    } else {
-      // Create a basic text version by stripping HTML tags
-      mailOptions.text = req.body.html.replace(/<[^>]*>/g, '');
-    }
-  } else if (req.body.text) {
-    // If only text was provided, use that
-    mailOptions.text = req.body.text;
-  }
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: 'Email sent successfully!', info });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to send email', details: error });
-  }
-});
-
-
 
 // Schedule cleanup of expired sessions (run once per day)
 const scheduleSessionCleanup = () => {

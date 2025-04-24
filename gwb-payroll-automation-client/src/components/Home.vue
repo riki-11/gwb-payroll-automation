@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue';
 import XLSX from 'xlsx';
 import { useUserStore } from '../stores/userStore';
-import { sendTestEmail } from '../api/api';
  
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
@@ -14,7 +13,7 @@ import SendAllPayslipsModal from './SendAllPayslipsModal.vue';
 import EmailSignatureEditor from './EmailSignatureEditor.vue';
 
 // APIs
-import { sendPayslipToEmail } from '../api/api';
+import { sendPayslipEmail } from '../api/api';
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
@@ -96,7 +95,7 @@ function clearTableData() {
 const sendPayslipToEmployee = async (email: string) => {
   const payslip = payslipFiles.value[email];
   const userStore = useUserStore();
-  const userEmail = userStore.getUserEmail;
+  // const userEmail = userStore.getUserEmail;
 
   if (!payslip) {
     console.error(`No payslip found for email: ${email}`);
@@ -113,13 +112,13 @@ const sendPayslipToEmployee = async (email: string) => {
 
     // Create FormData and append necessary fields
     const formData = new FormData();
-    formData.append('from', userEmail);
+    // formData.append('from', userEmail);
     formData.append('to', email);
     formData.append('subject', emailSubject.value);
     formData.append('html', fullEmailContent.value); // Use the combined content
     formData.append('file', payslip);
 
-    await sendPayslipToEmail(formData);
+    await sendPayslipEmail(formData);
     sentStates.value[email] = true;
 
     sendPayslipDialog.value = false;
@@ -135,7 +134,7 @@ const sendAllPayslips = async () => {
   // Grab user email from getCurrentUser route:
   try {
     const userStore = useUserStore();
-    const userEmail = userStore.getUserEmail;
+    // const userEmail = userStore.getUserEmail;
 
     if (userStore.getUserEmail == '') {
       console.error("Sender's email not found.");
@@ -152,14 +151,14 @@ const sendAllPayslips = async () => {
           loadingStates.value[email] = true;
 
           const formData = new FormData();
-          formData.append('from', userEmail)
+          // formData.append('from', userEmail)
           formData.append('to', email);
           formData.append('subject', emailSubject.value);
           formData.append('html', fullEmailContent.value); // Use the combined content
           formData.append('file', payslip);
   
-          // Use the centralized API function
-          await sendPayslipToEmail(formData);
+          // Use the new Graph API function
+          await sendPayslipEmail(formData);
           sentStates.value[email] = true;
         } catch (error) {
           console.error(`Error sending payslip to: ${email}`, error);
@@ -187,18 +186,6 @@ const openSendAllPayslipsDialog = () => {
   sendAllPayslipsDialog.value = true;
 };
 
-const testGraphEmail = async () => {
-  console.log('Testing Graph Email!')
-  const recipient = 'enrique.lejano@outlook.com'
-  const result = await sendTestEmail(recipient);
-  console.log(`Test email sent to ${recipient}:`, result);
-  if (result) {
-    console.log('Test email sent successfully!');
-  } else {
-    console.error('Failed to send test email.');
-  }
-}
-
 </script>
 
 
@@ -206,14 +193,6 @@ const testGraphEmail = async () => {
   <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
   <v-container class="d-flex flex-column align-start">
     <EmailPayslipsInstructions/>
-    <v-btn 
-      text="Test Graph Email"
-      @click="testGraphEmail"
-      color="primary"
-      prepend-icon="mdi-email-send"
-      size="large"
-      class="mt-4"
-    />
     <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
     <h2>Upload Employee Data</h2>
       <p>Ensure that spreadsheet has, at the very least, columns entitled "Worker No." and "Email" (strict capitalization and spelling).</p>

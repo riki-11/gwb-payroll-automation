@@ -23,6 +23,10 @@
         "dest": "routes/auth.ts"
       },
       {
+        "src": "/email/(.*)",
+        "dest": "routes/email.ts"
+      },
+      {
         "src": "/(.*)",
         "dest": "gwb-payroll-automation-client/dist/$1"
       }

@@ -51,23 +51,14 @@ export const getCurrentUser = async () => {
   return api.get('/auth/get-current-user');
 };
 
-export const sendPayslipToEmail = async (formData: FormData) => {
-  return axios.post(`${API_BASE_URL}/api/send-payslip-to-email`, formData, {
+// New API for sending payslips using Microsoft Graph
+export const sendPayslipEmail = async (formData: FormData) => {
+  return axios.post(`${API_BASE_URL}/email/send-payslip`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
     withCredentials: true
   });
 };
-
-export const sendTestEmail = async (recipient: string) => {
-  return api.post('/email/send-test-graph-email', { email: recipient });
-}
-
-// export const sendTestEmail = async (recipient: string) => {
-//   return axios.post(`${API_BASE_URL}/email/send-test-graph-email`, { email: recipient }, {
-//     withCredentials: true
-//   })
-// }
 
 export default api;
