@@ -62,6 +62,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     }
     
     // Add user to request object
+    // TODO: should this accessToken be here on the object? doesn't seem like it should...
     req.user = {
       id: userSession.id,
       email: userSession.email,

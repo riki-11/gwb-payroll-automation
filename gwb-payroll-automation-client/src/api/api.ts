@@ -1,4 +1,3 @@
-// gwb-payroll-automation-client/src/api/api.ts
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -60,5 +59,15 @@ export const sendPayslipToEmail = async (formData: FormData) => {
     withCredentials: true
   });
 };
+
+export const sendTestEmail = async (recipient: string) => {
+  return api.post('/email/send-test-graph-email', { email: recipient });
+}
+
+// export const sendTestEmail = async (recipient: string) => {
+//   return axios.post(`${API_BASE_URL}/email/send-test-graph-email`, { email: recipient }, {
+//     withCredentials: true
+//   })
+// }
 
 export default api;

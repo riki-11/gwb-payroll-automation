@@ -1,12 +1,13 @@
 // gwb-payroll-automation-server/index.ts
 import express, { Request, Response } from 'express';
-import authRouter from './routes/auth';
 import nodemailer from 'nodemailer';
 import multer from 'multer';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import cosmosDbService from './services/cosmosDbService';
+import authRouter from './routes/auth';
+import emailRouter from './routes/email';
 
 dotenv.config();
 
@@ -89,8 +90,10 @@ try {
 // Parse JSON request bodies
 app.use(express.json());
 
-// Mount auth routes
+// Mount additional routes
 app.use(authRouter);
+app.use(emailRouter);
+
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {

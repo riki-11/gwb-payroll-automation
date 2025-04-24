@@ -12,6 +12,7 @@
   "dependencies": {
     "@azure/cosmos": "^4.3.0",
     "@azure/msal-node": "^2.16.2",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@vercel/node": "^5.0.2",
     "axios": "^1.7.9",
     "cookie-parser": "^1.4.7",

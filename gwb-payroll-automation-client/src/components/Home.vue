@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import XLSX from 'xlsx';
 import { useUserStore } from '../stores/userStore';
+import { sendTestEmail } from '../api/api';
  
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
@@ -186,6 +187,18 @@ const openSendAllPayslipsDialog = () => {
   sendAllPayslipsDialog.value = true;
 };
 
+const testGraphEmail = async () => {
+  console.log('Testing Graph Email!')
+  const recipient = 'enrique.lejano@outlook.com'
+  const result = await sendTestEmail(recipient);
+  console.log(`Test email sent to ${recipient}:`, result);
+  if (result) {
+    console.log('Test email sent successfully!');
+  } else {
+    console.error('Failed to send test email.');
+  }
+}
+
 </script>
 
 
@@ -193,6 +206,14 @@ const openSendAllPayslipsDialog = () => {
   <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
   <v-container class="d-flex flex-column align-start">
     <EmailPayslipsInstructions/>
+    <v-btn 
+      text="Test Graph Email"
+      @click="testGraphEmail"
+      color="primary"
+      prepend-icon="mdi-email-send"
+      size="large"
+      class="mt-4"
+    />
     <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
     <h2>Upload Employee Data</h2>
       <p>Ensure that spreadsheet has, at the very least, columns entitled "Worker No." and "Email" (strict capitalization and spelling).</p>
