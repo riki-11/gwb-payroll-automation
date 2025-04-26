@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { validatePayslipMatch } from '../utils/payslipFileValidation'
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
@@ -35,68 +36,6 @@ const props = defineProps({
 
 // Store validation state for each employee
 const validationStates = ref<Record<string, ValidationState>>({});
-
-/**
- * Extracts worker number from payslip filename
- * @param filename The payslip filename (e.g., "C0001_-_Mr._LEJANO_Enrique_Payslip.pdf")
- * @returns The worker number or null if not found
- */
-const extractWorkerNumberFromFilename = (filename: string): string | null => {
-  // Common patterns for worker numbers in filenames
-  // TODO: be smart about extracting the filename prefix.
-  const patterns = [
-    /^C(\d+)_/, // Matches C0001_ at the beginning
-    /C(\d+)[-_]/, // Matches C0001- or C0001_ anywhere
-    /^(\d+)_/ // Matches 0001_ at the beginning (without C prefix)
-  ];
-
-  for (const pattern of patterns) {
-    const match = filename.match(pattern);
-    if (match && match[1]) {
-      // If found with C prefix but without it in the data, or vice versa
-      return match[1].replace(/^0+/, ''); // Remove leading zeros for comparison
-    }
-  }
-  
-  return null;
-};
-
-/**
- * Validates if the payslip file matches the employee's worker number
- * @param filename The payslip filename
- * @param workerNumber The employee's worker number from the data
- * @returns Object with validation result and message
- */
- const validatePayslipMatch = (
-  filename: string, 
-  workerNumber: string | number
-): ValidationState => {
-  // Standardize worker number for comparison (remove leading zeros and 'C' prefix if present)
-  const standardizedWorkerNumber = String(workerNumber)
-    .replace(/^C/i, '')  // Remove C prefix if present
-    .replace(/^0+/, ''); // Remove leading zeros
-  
-  const extractedNumber = extractWorkerNumberFromFilename(filename);
-  
-  if (!extractedNumber) {
-    return { 
-      isValid: false, 
-      message: 'Could not identify worker number in filename. Please verify manually.' 
-    };
-  }
-  
-  if (extractedNumber === standardizedWorkerNumber) {
-    return { 
-      isValid: true, 
-      message: 'Worker number matches.' 
-    };
-  }
-  
-  return { 
-    isValid: false, 
-    message: `Possible mismatch: File appears to be for worker ${extractedNumber}, but you're sending to worker ${standardizedWorkerNumber}.` 
-  };
-};
 
 
 const assignPayslipToEmployee = (email: string, workerNumber: string | number, event: Event) => {

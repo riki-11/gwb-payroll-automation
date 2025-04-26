@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { validatePayslipMatch } from '../utils/payslipFileValidation'
 
 const props = defineProps({
   payslipFiles: {
@@ -50,61 +51,6 @@ const payslip = computed(() => {
     return null
   }
 })
-
-/**
- * Extracts worker number from payslip filename
- */
- const extractWorkerNumberFromFilename = (filename: string): string | null => {
-  // Common patterns for worker numbers in filenames
-  const patterns = [
-    /^C(\d+)_/, // Matches C0001_ at the beginning
-    /C(\d+)[-_]/, // Matches C0001- or C0001_ anywhere
-    /^(\d+)_/ // Matches 0001_ at the beginning (without C prefix)
-  ];
-
-  for (const pattern of patterns) {
-    const match = filename.match(pattern);
-    if (match && match[1]) {
-      return match[1].replace(/^0+/, ''); // Remove leading zeros for comparison
-    }
-  }
-  
-  return null;
-};
-
-/**
- * Validates if the payslip file matches the employee's worker number
- */
- const validatePayslipMatch = (
-  filename: string, 
-  workerNumber: string | number
-): { isValid: boolean; message: string } => {
-  // Standardize worker number for comparison
-  const standardizedWorkerNumber = String(workerNumber)
-    .replace(/^C/i, '')  // Remove C prefix if present
-    .replace(/^0+/, ''); // Remove leading zeros
-  
-  const extractedNumber = extractWorkerNumberFromFilename(filename);
-  
-  if (!extractedNumber) {
-    return { 
-      isValid: false, 
-      message: 'Could not identify worker number in filename. Please verify manually.' 
-    };
-  }
-  
-  if (extractedNumber === standardizedWorkerNumber) {
-    return { 
-      isValid: true, 
-      message: 'Worker number matches.' 
-    };
-  }
-  
-  return { 
-    isValid: false, 
-    message: `Possible mismatch: File appears to be for worker ${extractedNumber}, but you're sending to worker ${standardizedWorkerNumber}.` 
-  };
-};
 
 // Compute validation result when a payslip is selected and row data is available
 const validationResult = computed(() => {
