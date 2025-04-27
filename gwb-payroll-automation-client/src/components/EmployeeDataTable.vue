@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { validatePayslipMatch } from '../utils/payslipFileValidation'
 
 // Define types for rows and headers
@@ -31,12 +31,44 @@ const props = defineProps({
   sentStates: {
     type: Object as () => Record<string, boolean>,
     required: true,
+  },
+  selectedRows: {
+    type: Object as () => Record<string, boolean>,
+    required: true,
   }
 });
+
+const emit = defineEmits([
+  'update:selected-rows',
+  'open-send-payslip-dialog'
+])
 
 // Store validation state for each employee
 const validationStates = ref<Record<string, ValidationState>>({});
 
+const allSelected = computed({
+  get() {
+    const emailsWithPayslips = props.tableData
+      .filter(row => props.payslipFiles[row['Email']])
+      .map(row => row['Email']);
+
+    if (emailsWithPayslips.length === 0) return false;
+
+    return emailsWithPayslips.every(email => props.selectedRows[email]);
+  },
+  set(value: boolean) {
+    const newSelectedRows: Record<string, boolean> = {};
+
+    props.tableData.forEach(row => {
+      const email = row['Email'];
+      if (email && props.payslipFiles[email]) {
+        newSelectedRows[email] = value;
+      }
+    });
+
+    emit('update:selected-rows', newSelectedRows);
+  }
+});
 
 const assignPayslipToEmployee = (email: string, workerNumber: string | number, event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -79,15 +111,38 @@ const getValidationColor = (email: string): string => {
       class="elevation-1"
       height="65vh"
       hide-default-footer
-      >
+    >
+      <template v-slot:headers>
+        <tr>
+          <th>
+            <v-checkbox
+              v-model="allSelected"
+              hide-details
+              class="pa-0"
+            />
+          </th>
+          <th v-for="header in props.tableHeaders" :key="header.value">
+            {{ header.text }}
+          </th>
+        </tr>
+      </template>
+
       <template v-slot:body="{ items }">
         <tr v-for="(item, index) in items" :key="index">
-          <td v-for="header in tableHeaders" :key="header.value">
-            <!-- Table Data -->
+          <td>
+            <v-checkbox
+              v-model="props.selectedRows[item['Email']]"
+              hide-details
+              @change="() => emit('update:selected-rows', {...props.selectedRows})"
+              :disabled="!props.payslipFiles[item['Email']]"
+              class="pa-0"
+            />
+          </td>
+          <td v-for="header in props.tableHeaders" :key="header.value">
+            <!-- Your other logic here stays the same -->
             <span v-if="header.value !== 'payslip' && header.value !== 'send-email'">
               {{ item[header.value] }}
             </span>
-            <!-- Payslip File Input -->
             <template v-else-if="header.value === 'payslip'">
               <v-file-input
                 label="Upload Payslip" 
@@ -98,14 +153,13 @@ const getValidationColor = (email: string): string => {
                 :error="validationStates[item['Email']] && !validationStates[item['Email']].isValid"
               />
             </template>
-            <!-- Send Email Button (or Spinner if loading) -->
             <template v-else>
               <v-progress-circular
                 v-if="props.loadingStates[item['Email']]"
                 indeterminate
                 color="primary"
                 size="24"
-              ></v-progress-circular>
+              />
               <v-btn
                 v-else
                 text="Send"
