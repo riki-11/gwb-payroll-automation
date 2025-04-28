@@ -1,24 +1,16 @@
 // gwb-payroll-automation-server/services/cosmosDbService.ts
 import { CosmosClient, Container, Database } from '@azure/cosmos';
 import dotenv from 'dotenv';
+import { UserSession } from '../models/UserSession';
+import { EmailLog } from '../models/EmailLog';
 
 dotenv.config();
-
-// User session interface
-export interface UserSession {
-  id: string;
-  email: string;
-  name: string;
-  accessToken: string;
-  refreshToken?: string;
-  expiresOn: number; // timestamp when the token expires
-  createdAt: number; // timestamp when the session was created
-}
 
 class CosmosDbService {
   private client: CosmosClient;
   private database: Database | undefined;
   private usersContainer: Container | undefined;
+  private emailLogsContainer: Container | undefined;
   private initialized: boolean = false;
   private initPromise: Promise<void> | null = null;
 
@@ -208,8 +200,104 @@ class CosmosDbService {
       throw error;
     }
   }
-}
 
+  // EmailLog methods
+  async createEmailLog(emailLog: EmailLog): Promise<EmailLog> {
+    try {
+      await this.ensureInitialized();
+
+      const { resource } = await this.emailLogsContainer!.items.create(emailLog);
+      return resource as EmailLog;
+    } catch (error) {
+      console.error('Error creating email log:', error);
+      throw error;
+    }
+  }
+
+  async getEmailLogsByEmail(email: string, role: 'sender' | 'recipient' = 'sender', limit: number = 100): Promise<EmailLog[]> {
+    try {
+      await this.ensureInitialized();
+
+      const field = role === 'sender' ? 'senderEmail' : 'recipientEmail';
+      
+      const querySpec = {
+        query: `SELECT * FROM c WHERE c.${field} = @email ORDER BY c._ts DESC OFFSET 0 LIMIT @limit`,
+        parameters: [
+          {
+            name: '@email',
+            value: email
+          },
+          {
+            name: '@limit',
+            value: limit
+          }
+        ]
+      };
+
+      const { resources } = await this.emailLogsContainer!.items.query(querySpec).fetchAll();
+      return resources as EmailLog[];
+    } catch (error) {
+      console.error(`Error retrieving email logs for ${role} ${email}:`, error);
+      throw error;
+    }
+  }
+
+  async getEmailLogsByWorkerNumber(workerNum: string, limit: number = 100): Promise<EmailLog[]> {
+    try {
+      await this.ensureInitialized();
+      
+      const querySpec = {
+        query: 'SELECT * FROM c WHERE c.recipientWorkerNum = @workerNum ORDER BY c._ts DESC OFFSET 0 LIMIT @limit',
+        parameters: [
+          {
+            name: '@workerNum',
+            value: workerNum
+          },
+          {
+            name: '@limit',
+            value: limit
+          }
+        ]
+      };
+
+      const { resources } = await this.emailLogsContainer!.items.query(querySpec).fetchAll();
+      return resources as EmailLog[];
+    } catch (error) {
+      console.error(`Error retrieving email logs for worker number ${workerNum}:`, error);
+      throw error;
+    }
+  }
+
+  async getEmailLogsByDateRange(startDate: string, endDate: string, limit: number = 100): Promise<EmailLog[]> {
+    try {
+      await this.ensureInitialized();
+      
+      const querySpec = {
+        query: 'SELECT * FROM c WHERE c.date >= @startDate AND c.date <= @endDate ORDER BY c.date DESC, c.timeSent DESC OFFSET 0 LIMIT @limit',
+        parameters: [
+          {
+            name: '@startDate',
+            value: startDate
+          },
+          {
+            name: '@endDate',
+            value: endDate
+          },
+          {
+            name: '@limit',
+            value: limit
+          }
+        ]
+      };
+
+      const { resources } = await this.emailLogsContainer!.items.query(querySpec).fetchAll();
+      return resources as EmailLog[];
+    } catch (error) {
+      console.error(`Error retrieving email logs for date range ${startDate} to ${endDate}:`, error);
+      throw error;
+    }
+  }
+}
 // Create and export a singleton instance
 const cosmosDbService = new CosmosDbService();
 export default cosmosDbService;
