@@ -86,9 +86,9 @@ const handleSendAllPayslips = () => {
 </script>
 
 <template>
-  <v-dialog v-model="props.dialog" width="600px">
+  <v-dialog v-model="props.dialog" max-width="1200px">
     <v-card>
-      <v-card-title>Proceed with sending all payslips?</v-card-title>
+      <v-card-title><strong>Proceed with sending payslips?</strong></v-card-title>
       <v-card-text>
         <p>Please double check that all payslip files have been uploaded to the corresponding employee.</p>
         <p><strong>Files assigned:</strong> {{ assignedFilesCount }} out of {{ tableData.length }} employees</p>
@@ -101,14 +101,6 @@ const handleSendAllPayslips = () => {
             <div v-if="isHtmlContent" v-html="props.emailBodyContent"></div>
             <pre v-else>{{ props.emailBodyContent }}</pre>
           </v-card>
-          <v-chip
-            v-if="isHtmlContent"
-            color="info"
-            size="small"
-            class="mt-1"
-          >
-            HTML Format
-          </v-chip>
         </div>
         
         <!-- Show validation summary -->

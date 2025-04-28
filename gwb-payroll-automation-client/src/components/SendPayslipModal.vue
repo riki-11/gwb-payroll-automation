@@ -86,9 +86,9 @@ const handleSendPayslipToEmployee = () => {
 
 <template>
   <!-- Shared Dialog -->
-  <v-dialog v-model="props.dialog" width="auto">
+  <v-dialog v-model="props.dialog" max-width="1200px">
    <v-card>
-     <v-card-title>Proceed with sending payslip?</v-card-title>
+     <v-card-title><strong>Proceed with sending payslip?</strong></v-card-title>
      <v-card-text>
        <div v-if="props.rowData">
          <p><strong>Worker No.:</strong> {{ props.rowData['Worker No.'] }}</p>
