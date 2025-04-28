@@ -270,6 +270,7 @@ const openSendAllPayslipsDialog = () => {
     :email-body-content="fullEmailContent"
     :tableData="tableData"
     :payslipFiles="payslipFiles"
+    :selected-rows="selectedRows"
     @update:dialog="sendAllPayslipsDialog = $event"
   />
 </template>
