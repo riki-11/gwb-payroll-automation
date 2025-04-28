@@ -29,6 +29,10 @@ const props = defineProps({
   payslipFiles: {
     type: Object as () => Record<string, File>,
     required: true
+  },
+  selectedRows: {
+    type: Object as () => Record<string, boolean>,
+    required: true
   }
 });
 
@@ -69,7 +73,23 @@ const validationIssues = computed(() => {
 
 // Count of files assigned
 const assignedFilesCount = computed(() => {
-  return Object.keys(props.payslipFiles).length;
+  return Object.keys(props.payslipFiles).filter(email => props.selectedRows[email]).length;
+});
+
+// List of selected payslips for viewing.
+const selectedPayslips = computed(() => {
+  return props.tableData
+    .filter(row => props.selectedRows[row['Email']])
+    .map(row => {
+      const email = row['Email'];
+      const payslip = props.payslipFiles[email];
+      return { 
+        workerNo: row['Worker No.'],
+        name: row['Name'],
+        email: email,
+        filename: payslip ? payslip.name : 'No file attached'
+      }
+    })
 });
 
 // Force user to acknowledge mismatches before sending
@@ -86,14 +106,32 @@ const handleSendAllPayslips = () => {
 </script>
 
 <template>
-  <v-dialog v-model="props.dialog" width="600px">
+  <v-dialog v-model="props.dialog" max-width="1200px">
     <v-card>
-      <v-card-title>Proceed with sending all payslips?</v-card-title>
+      <v-card-title><strong>Proceed with sending payslips?</strong></v-card-title>
       <v-card-text>
         <p>Please double check that all payslip files have been uploaded to the corresponding employee.</p>
         <p><strong>Files assigned:</strong> {{ assignedFilesCount }} out of {{ tableData.length }} employees</p>
         <p><strong>Email Subject: </strong> {{ props.emailSubject }} </p>
         
+        <!-- Selected Payslips List -->
+        <div class="my-4">
+          <div class="text-subtitle-1 mb-2">Selected Payslips:</div>
+          <v-card variant="outlined" class="pa-3 selected-payslips-container">
+            <v-list density="compact" nav>
+              <v-list-item
+                v-for="(payslip, index) in selectedPayslips"
+                :key="index"
+                class="py-1"
+              >
+                <v-list-item-title>
+                  <strong>({{ payslip.workerNo }}, {{ payslip.email }})</strong> {{ payslip.name }}: <em>{{ payslip.filename }}</em>
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </div>
+
         <!-- Email content preview -->
         <div class="my-3">
           <div class="text-subtitle-1">Email Preview:</div>
@@ -101,14 +139,6 @@ const handleSendAllPayslips = () => {
             <div v-if="isHtmlContent" v-html="props.emailBodyContent"></div>
             <pre v-else>{{ props.emailBodyContent }}</pre>
           </v-card>
-          <v-chip
-            v-if="isHtmlContent"
-            color="info"
-            size="small"
-            class="mt-1"
-          >
-            HTML Format
-          </v-chip>
         </div>
         
         <!-- Show validation summary -->
@@ -157,6 +187,10 @@ const handleSendAllPayslips = () => {
 <style scoped>
 .email-preview-container {
   max-height: 300px;
+  overflow-y: auto;
+}
+.selected-payslips-container {
+  max-height: 250px;
   overflow-y: auto;
 }
 </style>

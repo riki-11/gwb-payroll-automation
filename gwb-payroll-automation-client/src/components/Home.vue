@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import XLSX from 'xlsx';
-import { useUserStore } from '../stores/userStore';
  
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
@@ -38,6 +37,8 @@ const fullEmailContent = computed(() => {
 const payslipFiles = ref<Record<string, File>>({}); // Store payslip files indexed by email
 const loadingStates = ref<Record<string, boolean>>({}); // Track loading state for each email
 const sentStates = ref<Record<string, boolean>>({});
+const selectedRows = ref<Record<string, boolean>>({});
+
 
 // Dialog states
 const sendPayslipDialog = ref(false);
@@ -76,6 +77,13 @@ async function generateTableFromXLSX(event: Event) {
         });
         return rowObject;
       });
+
+      selectedRows.value = {};
+      tableData.value.forEach(row => {
+        if (row['Email']) {
+          selectedRows.value[row['Email']] = false;
+        }
+      });
     }
   } catch (error) {
     console.error('Error processing file:', error);
@@ -90,29 +98,22 @@ function clearTableData() {
   payslipFiles.value = {};
   loadingStates.value = {};
   sentStates.value = {};
+  selectedRows.value = {};
 }
 
 const sendPayslipToEmployee = async (email: string) => {
   const payslip = payslipFiles.value[email];
-  const userStore = useUserStore();
-  // const userEmail = userStore.getUserEmail;
 
   if (!payslip) {
     console.error(`No payslip found for email: ${email}`);
     return;
   }
 
-  if (userStore.getUserEmail == '') {
-    console.error("Sender's email not found.");
-    return;
-  }
-  
   try {
     loadingStates.value[email] = true;
 
     // Create FormData and append necessary fields
     const formData = new FormData();
-    // formData.append('from', userEmail);
     formData.append('to', email);
     formData.append('subject', emailSubject.value);
     formData.append('html', fullEmailContent.value); // Use the combined content
@@ -131,33 +132,21 @@ const sendPayslipToEmployee = async (email: string) => {
 
 
 const sendAllPayslips = async () => {
-  // Grab user email from getCurrentUser route:
   try {
-    const userStore = useUserStore();
-    // const userEmail = userStore.getUserEmail;
-
-    if (userStore.getUserEmail == '') {
-      console.error("Sender's email not found.");
-      return;
-    }
-
     const emailPromises = tableData.value.map(async row => {
       const email = row['Email'];
-      const payslip = payslipFiles.value[email];
 
-      if (email && payslip) {
+      // Only send if this row is selected
+      if (selectedRows.value[email] && email && payslipFiles.value[email]) {
         try {
-          // Create FormData for each email
           loadingStates.value[email] = true;
 
           const formData = new FormData();
-          // formData.append('from', userEmail)
           formData.append('to', email);
           formData.append('subject', emailSubject.value);
           formData.append('html', fullEmailContent.value); // Use the combined content
-          formData.append('file', payslip);
-  
-          // Use the new Graph API function
+          formData.append('file', payslipFiles.value[email]);
+
           await sendPayslipEmail(formData);
           sentStates.value[email] = true;
         } catch (error) {
@@ -169,12 +158,13 @@ const sendAllPayslips = async () => {
     });
 
     await Promise.all(emailPromises);
-    console.log('All payslips sent successfully!');
+    console.log('Selected payslips sent successfully!');
     sendAllPayslipsDialog.value = false;
   } catch (error) {
     console.error('Error sending payslips:', error);
   }
 };
+
 
 // Dialog event functions
 const openSendPayslipDialog = (row: RowData) => {
@@ -211,6 +201,8 @@ const openSendAllPayslipsDialog = () => {
       :payslip-files="payslipFiles"
       :loading-states="loadingStates"
       :sent-states="sentStates"
+      :selected-rows="selectedRows"
+      @update:selected-rows="selectedRows = $event"
       @open-send-payslip-dialog="openSendPayslipDialog"
     />
     <v-container
@@ -246,15 +238,16 @@ const openSendAllPayslipsDialog = () => {
       v-if="tableHeaders.length && tableData.length" 
       class="d-flex flex-column w-100 text-left py-4 ga-4"
     >
-      <v-btn 
-        text="Send All Payslips"
-        :disabled="!tableData.length || Object.keys(payslipFiles).length === 0" 
-        @click="openSendAllPayslipsDialog"
-        color="primary"
-        prepend-icon="mdi-email-send"
-        size="large"
-        class="mt-4"
-      />
+    <v-btn 
+      text:disabled="!Object.values(selectedRows).includes(true)" 
+      @click="openSendAllPayslipsDialog"
+      color="primary"
+      prepend-icon="mdi-email-send"
+      size="large"
+      class="mt-4"
+    >
+    {{ Object.values(selectedRows).filter(val => val).length === 0 ? 'No Payslips Selected' : `Send ${Object.values(selectedRows).filter(val => val).length} Selected Payslips` }}
+    </v-btn>
     </v-container>
   </v-container>
 
@@ -277,6 +270,7 @@ const openSendAllPayslipsDialog = () => {
     :email-body-content="fullEmailContent"
     :tableData="tableData"
     :payslipFiles="payslipFiles"
+    :selected-rows="selectedRows"
     @update:dialog="sendAllPayslipsDialog = $event"
   />
 </template>
