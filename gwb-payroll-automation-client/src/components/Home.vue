@@ -13,6 +13,7 @@ import EmailSignatureEditor from './EmailSignatureEditor.vue';
 
 // APIs
 import { sendPayslipEmail } from '../api/api';
+import { useUserStore } from '../stores/userStore';
 
 // Define types for rows and headers
 type RowData = Record<string, any>; // A single row object (key-value pair)
@@ -101,11 +102,19 @@ function clearTableData() {
   selectedRows.value = {};
 }
 
-const sendPayslipToEmployee = async (email: string) => {
+const sendPayslipToEmployee = async (email: string, workerNum: string, workerName: string) => {
   const payslip = payslipFiles.value[email];
+  const userStore = useUserStore();
+  const userEmail = userStore.getUserEmail;
+  const userName = userStore.getUserName;
 
   if (!payslip) {
     console.error(`No payslip found for email: ${email}`);
+    return;
+  }
+
+  if (!userEmail || !userName) {
+    console.error('User email or name is not available.');
     return;
   }
 
@@ -118,6 +127,10 @@ const sendPayslipToEmployee = async (email: string) => {
     formData.append('subject', emailSubject.value);
     formData.append('html', fullEmailContent.value); // Use the combined content
     formData.append('file', payslip);
+    formData.append('workerNum', workerNum);
+    formData.append('workerName', workerName);
+    formData.append('senderEmail', userEmail);
+    formData.append('senderName', userName)
 
     await sendPayslipEmail(formData);
     sentStates.value[email] = true;

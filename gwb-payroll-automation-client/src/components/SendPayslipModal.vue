@@ -72,8 +72,11 @@ const canSend = computed(() => {
 const handleSendPayslipToEmployee = () => {
   if (props.rowData) {
     const email = props.rowData['Email'];
-    if (email) {
-      props.sendPayslipToEmployee(email);
+    const workerNum = props.rowData['Worker No.'];
+    const workerName = props.rowData['Name'];
+
+    if (email && workerNum && workerName) {
+      props.sendPayslipToEmployee(email, workerNum, workerName);
       closeDialog();
     } else {
       console.error("No email found for sending payslip to employee.");

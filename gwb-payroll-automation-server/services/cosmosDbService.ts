@@ -44,8 +44,9 @@ class CosmosDbService {
       // Get a reference to the database
       this.database = this.client.database('payroll');
       
-      // Get a reference to the users container
+      // Get a reference to the containers
       this.usersContainer = this.database.container('users');
+      this.emailLogsContainer = this.database.container('emailsSent');
       
       this.initialized = true;
       console.log('Connected to Cosmos DB successfully');
@@ -75,8 +76,8 @@ class CosmosDbService {
       await this.init();
     }
     
-    if (!this.usersContainer) {
-      throw new Error('Users container is not initialized');
+    if (!this.usersContainer || !this.emailLogsContainer) {
+      throw new Error('Users or Email Log container is not initialized');
     }
   }
 
