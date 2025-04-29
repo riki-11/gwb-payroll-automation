@@ -130,7 +130,7 @@ const sendPayslipToEmployee = async (email: string, workerNum: string, workerNam
     formData.append('workerNum', workerNum);
     formData.append('workerName', workerName);
     formData.append('senderEmail', userEmail);
-    formData.append('senderName', userName)
+    formData.append('senderName', userName);
 
     await sendPayslipEmail(formData);
     sentStates.value[email] = true;
@@ -146,11 +146,23 @@ const sendPayslipToEmployee = async (email: string, workerNum: string, workerNam
 
 const sendAllPayslips = async () => {
   try {
+    const userStore = useUserStore();
+    const userEmail = userStore.getUserEmail;
+    const userName = userStore.getUserName;
+
+    if (!userEmail || !userName) {
+      console.error('User email or name is not available.');
+      return;
+    }
+
     const emailPromises = tableData.value.map(async row => {
       const email = row['Email'];
+      const workerNum = row['Worker No.'];
+      const workerName = row['Name'];
+      const payslip = payslipFiles.value[email];
 
       // Only send if this row is selected
-      if (selectedRows.value[email] && email && payslipFiles.value[email]) {
+      if (selectedRows.value[email] && email && payslip) {
         try {
           loadingStates.value[email] = true;
 
@@ -158,7 +170,11 @@ const sendAllPayslips = async () => {
           formData.append('to', email);
           formData.append('subject', emailSubject.value);
           formData.append('html', fullEmailContent.value); // Use the combined content
-          formData.append('file', payslipFiles.value[email]);
+          formData.append('file', payslip);
+          formData.append('workerNum', workerNum);
+          formData.append('workerName', workerName);
+          formData.append('senderEmail', userEmail);
+          formData.append('senderName', userName);
 
           await sendPayslipEmail(formData);
           sentStates.value[email] = true;
