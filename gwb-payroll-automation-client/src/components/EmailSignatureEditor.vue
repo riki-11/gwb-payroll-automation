@@ -64,6 +64,17 @@ const editor = useEditor({
   },
 });
 
+const isEditorVisible = ref(false);
+
+const toggleEditor = () => {
+  isEditorVisible.value = !isEditorVisible.value;
+  // Ensure editor content is up-to-date if toggling editor on
+  if (isEditorVisible.value && editor.value) {
+    editor.value.commands.setContent(signatureContent.value);
+  }
+};
+
+
 // Emit changes when signature content changes by other means
 watch(signatureContent, (newValue) => {
   emit('update:modelValue', newValue);
@@ -90,7 +101,7 @@ watch(() => props.modelValue, (newValue) => {
 // Predefined signature templates with proper typing
 const signatureTemplates = ref<SignatureTemplate[]>([
   {
-    title: 'GWB Entertainment',
+    title: 'GWB Entertainment (Luis)',
     html: `<table style="width: 704px;">
   <tbody>
     <tr style="height: 21px;">
@@ -101,10 +112,10 @@ const signatureTemplates = ref<SignatureTemplate[]>([
       </td>
       <td style="height: 21px; width: 500px;">
         <span style="font-family:helvetica; font-size:14px">
-          <b>NAME NAME NAME NAME</b>
+          <b>Luis Ramon L. Yatco</b>
         </span>
         <span style="font-family:helvetica; font-size:14px; color:#878787">
-          | TITLE TITLE TITLE TITLE
+          | <i>Production Assistant</i>
         </span>
       </td>
     </tr>
@@ -128,7 +139,87 @@ const signatureTemplates = ref<SignatureTemplate[]>([
     </tr>
   </tbody>
 </table>`
-  }
+  },
+  {
+    title: 'GWB Entertainment (Scott)',
+    html: `<table style="width: 704px;">
+  <tbody>
+    <tr style="height: 21px;">
+      <td style="height: 21px; width: 130px;" rowspan="2">
+        <a href="http://www.gwbentertainment.com/">
+          <img height="73" width="120" src="https://i.imgur.com/Vk5yV7R.jpg" />
+        </a>
+      </td>
+      <td style="height: 21px; width: 500px;">
+        <span style="font-family:helvetica; font-size:14px">
+          <b>Scott Garson CA(SA)</b>
+        </span>
+        <span style="font-family:helvetica; font-size:14px; color:#878787">
+          | <i>Head of Finance</i>
+        </span>
+      </td>
+    </tr>
+    <tr style="height: 21px;">
+      <td style="height: 21px; width: 500px;">
+        <span style="font-family:helvetica; font-size:12px; color:#878787">
+          +44 203 903 8758 | www.gwbentertainment.com
+          <br />
+          GWB Entertainment UK Ltd | 11 Russell Gardens Mews, London W14 8EU, United Kingdom
+          <br />
+          GWB Entertainment Pty Ltd | 50 Sir Donald Bradman Drive, Mile End, SA, 5031, Australia
+        </span>
+      </td>
+    </tr>
+    <tr style="height: 30px;">
+      <td style="height: 30px; width: 500px;" colspan="2">
+        <span style="font-family:helvetica; font-size:8px; color:#878787">
+          IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.
+        </span>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+  },
+  {
+    title: 'GWB Entertainment (Generic)',
+    html: `<table style="width: 704px;">
+  <tbody>
+    <tr style="height: 21px;">
+      <td style="height: 21px; width: 130px;" rowspan="2">
+        <a href="http://www.gwbentertainment.com/">
+          <img height="73" width="120" src="https://i.imgur.com/Vk5yV7R.jpg" />
+        </a>
+      </td>
+      <td style="height: 21px; width: 500px;">
+        <span style="font-family:helvetica; font-size:14px">
+          <b>NAME</b>
+        </span>
+        <span style="font-family:helvetica; font-size:14px; color:#878787">
+          | <i>TITLE</i>
+        </span>
+      </td>
+    </tr>
+    <tr style="height: 21px;">
+      <td style="height: 21px; width: 500px;">
+        <span style="font-family:helvetica; font-size:12px; color:#878787">
+          +44 203 903 8758 | www.gwbentertainment.com
+          <br />
+          GWB Entertainment UK Ltd | 11 Russell Gardens Mews, London W14 8EU, United Kingdom
+          <br />
+          GWB Entertainment Pty Ltd | 50 Sir Donald Bradman Drive, Mile End, SA, 5031, Australia
+        </span>
+      </td>
+    </tr>
+    <tr style="height: 30px;">
+      <td style="height: 30px; width: 500px;" colspan="2">
+        <span style="font-family:helvetica; font-size:8px; color:#878787">
+          IMPORTANT: The contents of this email and any attachments are confidential. It is strictly forbidden to share any part of this message with any third party, without a written consent of the sender. If you received this message by mistake, please reply to this message and follow with its deletion, so that we can ensure such a mistake does not occur in the future.
+        </span>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+  },
 ]);
 
 // Apply a template to the signature
@@ -206,10 +297,13 @@ onBeforeUnmount(() => {
       <v-card-text>
         <!-- Input method selector -->
         <v-tabs v-model="currentInputMethod" class="mb-4">
-          <v-tab value="editor">Rich Text Editor</v-tab>
+          <!-- TODO: Fix signature editing for rich text editor. -->
+          <!-- <v-tab value="editor">Rich Text Editor</v-tab> -->
           <v-tab value="paste">Paste HTML</v-tab>
           <v-tab value="upload">Upload HTML</v-tab>
         </v-tabs>
+
+
         
         <!-- Template selector - visible in all modes -->
         <div class="mb-4">
@@ -228,9 +322,19 @@ onBeforeUnmount(() => {
             </template>
           </v-select>
         </div>
-        
+
+        <v-btn
+          variant="text"
+          class="mb-3"
+          @click="toggleEditor"
+          color="primary"
+          prepend-icon="mdi-pencil"
+        >
+          {{ isEditorVisible ? 'Hide Editor' : 'Edit Signature' }}
+        </v-btn>
+
         <!-- Rich Text Editor -->
-        <div v-if="currentInputMethod === 'editor'">
+        <div v-if="currentInputMethod === 'editor' && isEditorVisible">
           <!-- Editor toolbar -->
           <div class="editor-toolbar mb-2 pa-1 d-flex flex-wrap bg-grey-lighten-4 rounded">
             <v-btn 
@@ -295,7 +399,7 @@ onBeforeUnmount(() => {
         </div>
         
         <!-- HTML Paste Method -->
-        <div v-else-if="currentInputMethod === 'paste'">
+        <div v-else-if="currentInputMethod === 'paste' && isEditorVisible">
           <v-textarea
             v-model="htmlInput"
             label="Paste your HTML signature here"
@@ -308,7 +412,7 @@ onBeforeUnmount(() => {
         </div>
         
         <!-- HTML Upload Method -->
-        <div v-else-if="currentInputMethod === 'upload'">
+        <div v-else-if="currentInputMethod === 'upload' && isEditorVisible">
           <v-file-input
             label="Upload HTML signature file"
             accept=".html,.htm"
