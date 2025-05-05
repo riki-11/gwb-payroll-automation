@@ -24,16 +24,16 @@ const isAuthenticated = ref(false);
 
 const emailLogs = ref<EmailLog[]>([]);
 const isLoading = ref(true);
-const headers = ref([
-    { text: 'Sender', value: 'senderName' },
-    { text: 'Recipient Name', value: 'recipientName' },
-    { text: 'Recipient Email', value: 'recipientEmail' },
-    { text: 'Recipient Worker No.', value: 'recipientWorkerNum' },
-    { text: 'Recipient Payslip File', value: 'recipientPayslipFile' },
-    { text: 'Date Sent', value: 'date' },
-    { text: 'Subject', value: 'subject' },
-    { text: 'Successful', value: 'successful' }
-])
+const headers = [
+    { title: 'Sender', value: 'senderName' },
+    { title: 'Recipient', value: 'recipientName' },
+    { title: 'Email', value: 'recipientEmail' },
+    { title: ' Worker No.', value: 'recipientWorkerNum' },
+    { title: 'Payslip File', value: 'recipientPayslipFile' },
+    { title: 'Date', value: 'date' },
+    { title: 'Subject', value: 'subject' },
+    { title: 'Successful', value: 'successful' }
+]
 
 const fetchEmailLogs = async () => {
     await fetchAllPayslipLogs()
@@ -62,8 +62,31 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="isAuthenticated">
-    <h1 class="py-10">Payslip Email Logs</h1>
-    <!-- Your logs content will go here -->
-  </div>
-</template>
+    <div v-if="isAuthenticated" class="p-6">
+      <h1 class="py-6 text-2xl font-bold">Payslip Email Logs</h1>
+  
+      <v-card>
+        <v-card-text>
+          <v-data-table
+            :headers="headers"
+            :items="emailLogs"
+            :loading="isLoading"
+            class="elevation-1"
+            fixed-header
+            height="600px"
+            item-value="id"
+          >
+            <template #item.successful="{ item }">
+              <v-chip :color="item.successful ? 'green' : 'red'" dark>
+                {{ item.successful ? 'Yes' : 'No' }}
+              </v-chip>
+            </template>
+            <template #no-data>
+              <v-alert type="info">No email logs found.</v-alert>
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
+    </div>
+  </template>
+  
