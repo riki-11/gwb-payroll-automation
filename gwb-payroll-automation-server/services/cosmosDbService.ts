@@ -215,6 +215,7 @@ class CosmosDbService {
     }
   }
 
+  // TODO: Think about the limit here.
   async getAllEmailLogs(limit: number = 100): Promise<EmailLog[]> {
     try {
       await this.ensureInitialized();

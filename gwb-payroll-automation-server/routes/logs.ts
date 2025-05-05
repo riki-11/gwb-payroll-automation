@@ -5,7 +5,7 @@ import { EmailLog } from '../models/EmailLog';
 
 const router = express.Router();
 
-router.get('/get-payslip-logs', requireAuth, async (req: Request, res: Response) => {
+router.get('/logs/get-payslip-logs', requireAuth, async (req: Request, res: Response) => {
   try {
     // Get limit parameter from query string, default to 100 if not provided
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
+import { fetchAllPayslipLogs } from '../api/api';
 
 interface EmailLog {
     id?: string;           // Cosmos DB will generate this if not provided
@@ -35,7 +36,17 @@ const headers = ref([
 ])
 
 const fetchEmailLogs = async () => {
-    // console.log first...
+    await fetchAllPayslipLogs()
+        .then((response) => {
+            emailLogs.value = response.data;
+            isLoading.value = false;
+        })
+        .catch((error) => {
+            console.error('Error fetching email logs:', error);
+            isLoading.value = false;
+        });
+
+    console.log('Email logs:', emailLogs.value);
 }
 
 onMounted(async () => {
@@ -45,7 +56,7 @@ onMounted(async () => {
     router.push('/');
     return;
   }
-  
+  await fetchEmailLogs();
   isAuthenticated.value = true;
 });
 </script>
