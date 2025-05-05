@@ -215,6 +215,28 @@ class CosmosDbService {
     }
   }
 
+  async getAllEmailLogs(limit: number = 100): Promise<EmailLog[]> {
+    try {
+      await this.ensureInitialized();
+      
+      const querySpec = {
+        query: 'SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT @limit',
+        parameters: [
+          {
+            name: '@limit',
+            value: limit
+          }
+        ]
+      };
+  
+      const { resources } = await this.emailLogsContainer!.items.query(querySpec).fetchAll();
+      return resources as EmailLog[];
+    } catch (error) {
+      console.error('Error retrieving all email logs:', error);
+      throw error;
+    }
+  }
+
   async getEmailLogsByEmail(email: string, role: 'sender' | 'recipient' = 'sender', limit: number = 100): Promise<EmailLog[]> {
     try {
       await this.ensureInitialized();

@@ -61,4 +61,8 @@ export const sendPayslipEmail = async (formData: FormData) => {
   });
 };
 
+export const fetchAllPayslipLogs = async () => {
+  return api.get('/get-payslip-logs');
+}
+
 export default api;
