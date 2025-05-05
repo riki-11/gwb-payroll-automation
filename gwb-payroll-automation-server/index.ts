@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import cosmosDbService from './services/cosmosDbService';
 import authRouter from './routes/auth';
 import emailRouter from './routes/email';
+import logRouter from './routes/logs';
 
 dotenv.config();
 
@@ -78,7 +79,7 @@ app.use(express.json());
 // Mount additional routes
 app.use(authRouter);
 app.use(emailRouter);
-
+app.use(logRouter);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: express.NextFunction) => {

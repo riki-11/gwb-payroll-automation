@@ -2,8 +2,9 @@ import express, { Request, Response } from 'express';
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
-import cosmosDbService, { UserSession } from '../services/cosmosDbService';
+import cosmosDbService from '../services/cosmosDbService';
 import { requireAuth } from '../middleware/authMiddleware';
+import { UserSession } from '../models/UserSession';
 
 dotenv.config();
 

@@ -209,7 +209,7 @@ const openSendAllPayslipsDialog = () => {
 
 
 <template>
-  <h1 class="py-10">Upload Employee Data and Email Payslips</h1>
+  <h1 class="py-10">Upload Employee Data and Send Payslips</h1>
   <v-container class="d-flex flex-column align-start">
     <EmailPayslipsInstructions/>
     <v-container class="d-flex flex-column w-100 text-left py-4 ga-4">
