@@ -4,7 +4,7 @@ import {ref} from 'vue';
 const instructions = ref<string[]>([
   'Step 1: Login to your GWB Microsoft account.',
   'Step 2: Upload the .XLSX file containing employee emails.',
-  'Step 3: Attach the corresponding payslips for each employee.',
+  'Step 3: Attach the corresponding payslips for each employee or upload a zip file containing all payslips.',
   'Step 4: Write the email body, subject, and add a signature if needed.',
   'Step 5: For individual emails, click "Send" per employee row.',
   'Step 6: For bulk emails, select employees using the checkboxes then click "Send All Payslips" at the bottom.'
