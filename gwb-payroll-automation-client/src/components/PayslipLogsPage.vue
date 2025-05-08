@@ -28,7 +28,7 @@ const headers = [
     { title: 'Sender', value: 'senderName' },
     { title: 'Recipient', value: 'recipientName' },
     { title: 'Email', value: 'recipientEmail' },
-    { title: ' Worker No.', value: 'recipientWorkerNum' },
+    { title: 'Worker No.', value: 'recipientWorkerNum' },
     { title: 'Payslip File', value: 'recipientPayslipFile' },
     { title: 'Date', value: 'date' },
     { title: 'Subject', value: 'subject' },
@@ -56,8 +56,8 @@ onMounted(async () => {
     router.push('/');
     return;
   }
-  await fetchEmailLogs();
   isAuthenticated.value = true;
+  await fetchEmailLogs();
 });
 </script>
 
@@ -65,6 +65,11 @@ onMounted(async () => {
     <div v-if="isAuthenticated" class="p-6">
       <h1 class="py-6 text-2xl font-bold">Payslip Email Logs</h1>
   
+      <div v-if="isLoading" class="mb-4">
+        <v-progress-circular indeterminate color="primary" size="32"></v-progress-circular>
+        <span>Fetching payslip logs...</span>
+      </div>
+
       <v-card>
         <v-card-text>
           <v-data-table
