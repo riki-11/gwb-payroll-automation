@@ -101,6 +101,49 @@ watch(() => props.modelValue, (newValue) => {
 // Predefined signature templates with proper typing
 const signatureTemplates = ref<SignatureTemplate[]>([
   {
+    title: 'Angel of Music (Scott)',
+    html: `<table cellpadding="0" cellspacing="0" style="font-family:Arial, sans-serif; font-size:13px; color:#000000; line-height:1.5;">
+  <tbody>
+    <tr>
+      <td style="font-weight: bold;">Scott Garson CA(SA) | Head of Finance</td>
+    </tr>
+    <tr>
+      <td colspan="2">Office: +44 (0)203 903 8758</td>
+    </tr>
+    <tr><td colspan="2" style="height: 20px;"></td></tr>
+    <tr>
+      <td colspan="2">Angel of Music Limited<br />
+        6 Catherine St<br />
+        London, WC2B 5JY<br />
+        United Kingdom
+      </td>
+    </tr>
+    <tr><td colspan="2" style="height: 20px;"></td></tr>
+    <tr>
+      <td colspan="2">
+        THE PHANTOM OF THE OPERA | INTERNATIONAL TOUR | 2024 |
+        <a href="http://www.thephantomoftheopera.com" style="color:#0000EE; text-decoration:underline;">
+          www.thephantomoftheopera.com
+        </a>
+      </td>
+    </tr>
+    <tr><td colspan="2" style="height: 20px;"></td></tr>
+    <tr>
+      <td colspan="2" style="font-size:11px; color:#333;">
+        The content of this e-mail (including any attachments) is strictly confidential and commercially sensitive
+        and may contain copyright and/or legally privileged information. If you are not, or believe you may not be,
+        the intended recipient, please advise the sender immediately by return e-mail, delete this e-mail and destroy
+        any copies. In these circumstances, any use or dissemination of this e-mail, or any other dealing based on
+        this e-mail, is strictly prohibited and may be a breach of International law. No warranty is given by us that
+        the integrity or security of this e-mail (including any attachments) has been maintained through transmission
+        or that it is free of virus or any other defect or error. Formatting may have altered in transmission.
+      </td>
+    </tr>
+  </tbody>
+</table>
+`
+  },
+  {
     title: 'GWB Entertainment (Luis)',
     html: `<table style="width: 704px;">
   <tbody>
