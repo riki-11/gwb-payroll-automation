@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import XLSX from 'xlsx';
- 
+import JSZip from 'jszip'; 
+
 // Components
 import EmployeeDataTable from './EmployeeDataTable.vue';
 import EmailBodyEditor from './EmailBodyEditor.vue';
@@ -39,7 +40,7 @@ const payslipFiles = ref<Record<string, File>>({}); // Store payslip files index
 const loadingStates = ref<Record<string, boolean>>({}); // Track loading state for each email
 const sentStates = ref<Record<string, boolean>>({});
 const selectedRows = ref<Record<string, boolean>>({});
-
+const zipFileNames = ref<string[]>([]);
 
 // Dialog states
 const sendPayslipDialog = ref(false);
@@ -100,6 +101,59 @@ function clearTableData() {
   loadingStates.value = {};
   sentStates.value = {};
   selectedRows.value = {};
+}
+
+async function handleZipUpload(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input?.files?.[0];
+  if (!file) {
+    console.error('No zip file selected.');
+    return;
+  }
+
+  try {
+    const zip = new JSZip();
+    const zipContent = await zip.loadAsync(file);
+
+    // Filter to include only PDF files and exclude unwanted files
+    zipFileNames.value = Object.keys(zipContent.files).filter(
+      (fileName) =>
+        fileName.endsWith('.pdf') && // Only include PDF files
+        !fileName.startsWith('__MACOSX/') && // Exclude macOS metadata
+        !fileName.includes('/._') // Exclude macOS resource forks
+    );
+
+    console.log('Filtered PDF file names:', zipFileNames.value);
+
+    // Match worker numbers with filenames and assign files
+    tableData.value.forEach(async (row) => {
+      const workerNumber = row['Worker No.'];
+      const email = row['Email'];
+
+      if (workerNumber && email) {
+        const matchedFileName = zipFileNames.value.find((fileName) =>
+          fileName.includes(workerNumber)
+        );
+
+        if (matchedFileName) {
+          console.log(`Worker No. ${workerNumber}: Match found (${matchedFileName})`);
+
+          // Extract the matched file from the zip
+          const fileData = await zipContent.files[matchedFileName].async('blob');
+          const payslipFile = new File([fileData], matchedFileName, { type: 'application/pdf' });
+
+          // Assign the file to the corresponding email in payslipFiles
+          payslipFiles.value[email] = payslipFile;
+
+          console.log(`Payslip "${matchedFileName}" assigned to ${email}`);
+        } else {
+          console.log(`Worker No. ${workerNumber}: No match found`);
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error processing zip file:', error);
+  }
 }
 
 const sendPayslipToEmployee = async (email: string, workerNum: string, workerName: string) => {
@@ -234,6 +288,24 @@ const openSendAllPayslipsDialog = () => {
       @update:selected-rows="selectedRows = $event"
       @open-send-payslip-dialog="openSendPayslipDialog"
     />
+    <v-container
+      v-if="tableHeaders.length && tableData.length"
+      class="d-flex flex-column w-100 text-left py-4 ga-4"
+    >
+      <h2>Upload Payslip Zip File</h2>
+      <p>Note: Only PDF files are allowed for payslips at the moment.</p>
+      <v-file-input 
+        label="Upload Zip File" 
+        @change="handleZipUpload"
+        accept=".zip"
+        clearable
+      />
+      <v-list v-if="zipFileNames.length" class="mt-4">
+        <v-list-item v-for="fileName in zipFileNames" :key="fileName">
+          <v-list-item-title>{{ fileName }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-container>
     <v-container
       v-if="tableHeaders.length && tableData.length"
       class="d-flex flex-column w-100 text-left py-4 ga-4"

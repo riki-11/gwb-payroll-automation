@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed , watch} from 'vue';
 import { validatePayslipMatch } from '../utils/payslipFileValidation'
 
 // Define types for rows and headers
@@ -97,12 +97,34 @@ const getValidationColor = (email: string): string => {
   }
   return validationStates.value[email].isValid ? 'success' : 'error';
 };
+
+// Watch for changes in payslipFiles and validate
+watch(
+  () => props.payslipFiles,
+  (newPayslipFiles) => {
+    Object.keys(newPayslipFiles).forEach((email) => {
+      const payslipFile = newPayslipFiles[email];
+      const workerNumber = props.tableData.find((row) => row['Email'] === email)?.['Worker No.'];
+
+      if (payslipFile && workerNumber) {
+        const validation = validatePayslipMatch(payslipFile.name, workerNumber);
+        validationStates.value[email] = validation;
+
+        console.log(
+          `Payslip "${payslipFile.name}" validated for ${email} - Validation: ${validation.message}`
+        );
+      }
+    });
+  },
+  { deep: true }
+);
 </script>
 
 <template>
   <!-- TODO: Upon confirming sending all payslips. Show loading indicators for all rows accordingly. -->
   <v-container class="d-flex flex-column align-start w-100">
     <h2>Attach Employee Payslips</h2>
+    <p>Note: For bulk attachments, upload a zip below.</p>
   </v-container>
   <v-container class="d-flex flex-column align-center w-100">
     <v-data-table 
