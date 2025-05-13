@@ -50,16 +50,15 @@ const validationIssues = computed(() => {
   const issues = [];
   
   for (const row of props.tableData) {
-    const email = row['Email'];
     const workerNumber = row['Worker No.'];
-    const payslip = props.payslipFiles[email];
+    const payslip = props.payslipFiles[workerNumber];
     
     if (payslip) {
       const validation = validatePayslipMatch(payslip.name, workerNumber);
       if (!validation.isValid) {
         issues.push({
           employee: row['Name'],
-          email: email,
+          email: row['Email'],
           workerNumber: workerNumber,
           filename: payslip.name,
           message: validation.message
@@ -79,17 +78,17 @@ const assignedFilesCount = computed(() => {
 // List of selected payslips for viewing.
 const selectedPayslips = computed(() => {
   return props.tableData
-    .filter(row => props.selectedRows[row['Email']])
+    .filter(row => props.selectedRows[row['Worker No.']])
     .map(row => {
-      const email = row['Email'];
-      const payslip = props.payslipFiles[email];
+      const workerNumber = row['Worker No.'];
+      const payslip = props.payslipFiles[workerNumber];
       return { 
-        workerNo: row['Worker No.'],
+        workerNo: workerNumber,
         name: row['Name'],
-        email: email,
+        email: row['Email'],
         filename: payslip ? payslip.name : 'No file attached'
-      }
-    })
+      };
+    });
 });
 
 // Force user to acknowledge mismatches before sending

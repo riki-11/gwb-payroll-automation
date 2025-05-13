@@ -79,7 +79,7 @@ router.post('/email/send-payslip', requireAuth, upload.single('file'), async (re
 
     if (success) {
       res.status(200).json({ 
-        success: false,
+        success: true,
         message: 'Email sent and logged successfully.' 
       });
     } else {

@@ -127,43 +127,43 @@ async function handleZipUpload(event: Event) {
 
     // Match worker numbers with filenames and assign files
     tableData.value.forEach(async (row) => {
-      const workerNumber = row['Worker No.'];
-      const email = row['Email'];
+    const workerNumber = row['Worker No.'];
+    const email = row['Email'];
 
-      if (workerNumber && email) {
-        const matchedFileName = zipFileNames.value.find((fileName) =>
-          fileName.includes(workerNumber)
-        );
+    if (workerNumber && email) {
+      const matchedFileName = zipFileNames.value.find((fileName) =>
+        fileName.includes(workerNumber)
+      );
 
-        if (matchedFileName) {
-          console.log(`Worker No. ${workerNumber}: Match found (${matchedFileName})`);
+      if (matchedFileName) {
+        console.log(`Worker No. ${workerNumber}: Match found (${matchedFileName})`);
 
-          // Extract the matched file from the zip
-          const fileData = await zipContent.files[matchedFileName].async('blob');
-          const payslipFile = new File([fileData], matchedFileName, { type: 'application/pdf' });
+        // Extract the matched file from the zip
+        const fileData = await zipContent.files[matchedFileName].async('blob');
+        const payslipFile = new File([fileData], matchedFileName, { type: 'application/pdf' });
 
-          // Assign the file to the corresponding email in payslipFiles
-          payslipFiles.value[email] = payslipFile;
+        // Assign the file to the corresponding worker number in payslipFiles
+        payslipFiles.value[workerNumber] = payslipFile;
 
-          console.log(`Payslip "${matchedFileName}" assigned to ${email}`);
-        } else {
-          console.log(`Worker No. ${workerNumber}: No match found`);
-        }
+        console.log(`Payslip "${matchedFileName}" assigned to Worker No. ${workerNumber}`);
+      } else {
+        console.log(`Worker No. ${workerNumber}: No match found`);
       }
-    });
+    }
+  });
   } catch (error) {
     console.error('Error processing zip file:', error);
   }
 }
 
 const sendPayslipToEmployee = async (email: string, workerNum: string, workerName: string) => {
-  const payslip = payslipFiles.value[email];
+  const payslip = payslipFiles.value[workerNum];
   const userStore = useUserStore();
   const userEmail = userStore.getUserEmail;
   const userName = userStore.getUserName;
 
   if (!payslip) {
-    console.error(`No payslip found for email: ${email}`);
+    console.error(`No payslip found for Worker No.: ${workerNum}`);
     return;
   }
 
@@ -173,13 +173,12 @@ const sendPayslipToEmployee = async (email: string, workerNum: string, workerNam
   }
 
   try {
-    loadingStates.value[email] = true;
+    loadingStates.value[workerNum] = true;
 
-    // Create FormData and append necessary fields
     const formData = new FormData();
     formData.append('to', email);
     formData.append('subject', emailSubject.value);
-    formData.append('html', fullEmailContent.value); // Use the combined content
+    formData.append('html', fullEmailContent.value);
     formData.append('file', payslip);
     formData.append('workerNum', workerNum);
     formData.append('workerName', workerName);
@@ -187,13 +186,13 @@ const sendPayslipToEmployee = async (email: string, workerNum: string, workerNam
     formData.append('senderName', userName);
 
     await sendPayslipEmail(formData);
-    sentStates.value[email] = true;
+    sentStates.value[workerNum] = true;
 
     sendPayslipDialog.value = false;
   } catch (error) {
     console.error('Error uploading file or sending email:', error);
   } finally {
-    loadingStates.value[email] = false;
+    loadingStates.value[workerNum] = false;
   }
 };
 
@@ -210,20 +209,19 @@ const sendAllPayslips = async () => {
     }
 
     const emailPromises = tableData.value.map(async row => {
-      const email = row['Email'];
       const workerNum = row['Worker No.'];
+      const email = row['Email'];
       const workerName = row['Name'];
-      const payslip = payslipFiles.value[email];
+      const payslip = payslipFiles.value[workerNum];
 
-      // Only send if this row is selected
-      if (selectedRows.value[email] && email && payslip) {
+      if (selectedRows.value[workerNum] && payslip) {
         try {
-          loadingStates.value[email] = true;
+          loadingStates.value[workerNum] = true;
 
           const formData = new FormData();
           formData.append('to', email);
           formData.append('subject', emailSubject.value);
-          formData.append('html', fullEmailContent.value); // Use the combined content
+          formData.append('html', fullEmailContent.value);
           formData.append('file', payslip);
           formData.append('workerNum', workerNum);
           formData.append('workerName', workerName);
@@ -231,11 +229,11 @@ const sendAllPayslips = async () => {
           formData.append('senderName', userName);
 
           await sendPayslipEmail(formData);
-          sentStates.value[email] = true;
+          sentStates.value[workerNum] = true;
         } catch (error) {
-          console.error(`Error sending payslip to: ${email}`, error);
+          console.error(`Error sending payslip to Worker No.: ${workerNum}`, error);
         } finally {
-          loadingStates.value[email] = false;
+          loadingStates.value[workerNum] = false;
         }
       }
     });

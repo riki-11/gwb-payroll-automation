@@ -41,16 +41,14 @@ const isHtmlContent = computed(() => {
 });
 
 const payslip = computed(() => {
-  if (props.payslipFiles) {
-    if (props.rowData) {
-      const email = props.rowData['Email'];
-      return props.payslipFiles[email]
-    }
+  if (props.payslipFiles && props.rowData) {
+    const workerNumber = props.rowData['Worker No.'];
+    return props.payslipFiles[workerNumber];
   } else {
-    console.error("No payslip files have been uploaded.")
-    return null
+    console.error("No payslip files have been uploaded.");
+    return null;
   }
-})
+});
 
 // Compute validation result when a payslip is selected and row data is available
 const validationResult = computed(() => {

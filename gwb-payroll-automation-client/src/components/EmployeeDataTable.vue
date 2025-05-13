@@ -48,21 +48,21 @@ const validationStates = ref<Record<string, ValidationState>>({});
 
 const allSelected = computed({
   get() {
-    const emailsWithPayslips = props.tableData
-      .filter(row => props.payslipFiles[row['Email']])
-      .map(row => row['Email']);
+    const workersWithPayslips = props.tableData
+      .filter(row => props.payslipFiles[row['Worker No.']])
+      .map(row => row['Worker No.']);
 
-    if (emailsWithPayslips.length === 0) return false;
+    if (workersWithPayslips.length === 0) return false;
 
-    return emailsWithPayslips.every(email => props.selectedRows[email]);
+    return workersWithPayslips.every(workerNumber => props.selectedRows[workerNumber]);
   },
   set(value: boolean) {
     const newSelectedRows: Record<string, boolean> = {};
 
     props.tableData.forEach(row => {
-      const email = row['Email'];
-      if (email && props.payslipFiles[email]) {
-        newSelectedRows[email] = value;
+      const workerNumber = row['Worker No.'];
+      if (workerNumber && props.payslipFiles[workerNumber]) {
+        newSelectedRows[workerNumber] = value;
       }
     });
 
@@ -70,48 +70,49 @@ const allSelected = computed({
   }
 });
 
-const assignPayslipToEmployee = (email: string, workerNumber: string | number, event: Event) => {
+const assignPayslipToEmployee = (workerNumber: string | number, event: Event) => {
   const input = event.target as HTMLInputElement;
 
-  // Assign the uploaded payslip to that particular email address. 
+  // Assign the uploaded payslip to that particular worker number
   if (input && input.files && input.files[0]) {
     const payslipFile = input.files[0];
-    
+
     // Validate the payslip file against worker number
     const validation = validatePayslipMatch(payslipFile.name, workerNumber);
-    validationStates.value[email] = validation;
-    
-    // Still assign the file even if validation fails, 
-    // so the user can decide whether to proceed
-    props.payslipFiles[email] = payslipFile;
+    validationStates.value[workerNumber] = validation;
 
-    console.log(`Payslip with filename "${payslipFile.name}" assigned to ${email} - Validation: ${validation.message}`);
+    // Assign the file to the worker number
+    props.payslipFiles[workerNumber] = payslipFile;
+
+    console.log(
+      `Payslip with filename "${payslipFile.name}" assigned to Worker No. ${workerNumber} - Validation: ${validation.message}`
+    );
   } else {
     console.error('Input is null');
   }
 };
 
-const getValidationColor = (email: string): string => {
-  if (!validationStates.value[email]) {
+const getValidationColor = (workerNumber: string): string => {
+  if (!validationStates.value[workerNumber]) {
     return '';
   }
-  return validationStates.value[email].isValid ? 'success' : 'error';
+  return validationStates.value[workerNumber].isValid ? 'success' : 'error';
 };
 
-// Watch for changes in payslipFiles and validate
 watch(
   () => props.payslipFiles,
   (newPayslipFiles) => {
-    Object.keys(newPayslipFiles).forEach((email) => {
-      const payslipFile = newPayslipFiles[email];
-      const workerNumber = props.tableData.find((row) => row['Email'] === email)?.['Worker No.'];
+    console.log(`New payslip files detected: ${JSON.stringify(newPayslipFiles)}`);
+    Object.keys(newPayslipFiles).forEach((workerNumber) => {
+      const payslipFile = newPayslipFiles[workerNumber];
+      const email = props.tableData.find((row) => row['Worker No.'] === workerNumber)?.['Email'];
 
-      if (payslipFile && workerNumber) {
+      if (payslipFile && email) {
         const validation = validatePayslipMatch(payslipFile.name, workerNumber);
-        validationStates.value[email] = validation;
+        validationStates.value[workerNumber] = validation;
 
         console.log(
-          `Payslip "${payslipFile.name}" validated for ${email} - Validation: ${validation.message}`
+          `Payslip "${payslipFile.name}" validated for Worker No. ${workerNumber} - Validation: ${validation.message}`
         );
       }
     });
@@ -153,10 +154,10 @@ watch(
         <tr v-for="(item, index) in items" :key="index">
           <td>
             <v-checkbox
-              v-model="props.selectedRows[item['Email']]"
+              v-model="props.selectedRows[item['Worker No.']]"
               hide-details
               @change="() => emit('update:selected-rows', {...props.selectedRows})"
-              :disabled="!props.payslipFiles[item['Email']]"
+              :disabled="!props.payslipFiles[item['Worker No.']]"
               class="pa-0"
             />
           </td>
@@ -168,16 +169,16 @@ watch(
             <template v-else-if="header.value === 'payslip'">
               <v-file-input
                 label="Upload Payslip" 
-                @change="(event: Event) => assignPayslipToEmployee(item['Email'], item['Worker No.'], event)"
-                :color="getValidationColor(item['Email'])"
-                :hint="validationStates[item['Email']]?.message"
+                @change="(event: Event) => assignPayslipToEmployee(item['Worker No.'], event)"
+                :color="getValidationColor(item['Worker No.'])"
+                :hint="validationStates[item['Worker No.']]?.message"
                 persistent-hint
-                :error="validationStates[item['Email']] && !validationStates[item['Email']].isValid"
+                :error="validationStates[item['Worker No.']] && !validationStates[item['Worker No.']].isValid"
               />
             </template>
             <template v-else>
               <v-progress-circular
-                v-if="props.loadingStates[item['Email']]"
+                v-if="props.loadingStates[item['Worker No.']]"
                 indeterminate
                 color="primary"
                 size="24"
@@ -185,14 +186,14 @@ watch(
               <v-btn
                 v-else
                 text="Send"
-                :disabled="!props.payslipFiles[item['Email']] || 
-                            props.sentStates[item['Email']] || 
-                            (validationStates[item['Email']] && 
-                            !validationStates[item['Email']].isValid)"
-                :color="props.sentStates[item['Email']] ? 'success' : 'primary'"
+                :disabled="!props.payslipFiles[item['Worker No.']] || 
+                            props.sentStates[item['Worker No.']] || 
+                            (validationStates[item['Worker No.']] && 
+                            !validationStates[item['Worker No.']].isValid)"
+                :color="props.sentStates[item['Worker No.']] ? 'success' : 'primary'"
                 @click="$emit('open-send-payslip-dialog', item)"
               >
-                {{ props.sentStates[item['Email']] ? 'Sent' : 'Send' }}
+                {{ props.sentStates[item['Worker No.']] ? 'Sent' : 'Send' }}
               </v-btn>
             </template>
           </td>

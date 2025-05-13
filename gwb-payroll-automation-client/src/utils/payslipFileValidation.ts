@@ -20,6 +20,8 @@ export const validatePayslipMatch = (
   // Standardize worker number for comparison
   const standardizedWorkerNumber = String(workerNumber).trim();
   
+  console.log(`From payslipFileValidation.ts: filename: ${filename}, workerNumber: ${standardizedWorkerNumber}`);
+
   // If the filename contains the worker number directly, that's a match
   if (filename.includes(standardizedWorkerNumber)) {
     return { 
