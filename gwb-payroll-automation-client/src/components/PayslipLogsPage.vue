@@ -30,7 +30,11 @@ const headers = [
     { title: 'Email', value: 'recipientEmail' },
     { title: 'Worker No.', value: 'recipientWorkerNum' },
     { title: 'Payslip File', value: 'recipientPayslipFile' },
+    { title: 'Batch ID', value: 'batchId' },
+    { title: 'Batch Size', value: 'batchSize' },
+    { title: 'Batch Item No.', value: 'batchItemNum'},
     { title: 'Date', value: 'date' },
+    { title: 'Time Sent', value: 'timeSent' },
     { title: 'Subject', value: 'subject' },
     { title: 'Successful', value: 'successful' }
 ]

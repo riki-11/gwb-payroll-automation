@@ -31,6 +31,9 @@ router.post('/email/send-payslip', requireAuth, upload.single('file'), async (re
     const workerName = req.body.workerName;
     const senderName = req.body.senderName;
     const senderEmail = req.body.senderEmail;
+    const batchId = req.body.batchId;
+    const batchItemNum = req.body.batchItemNum;
+    const batchSize = req.body.batchSize;
 
     // The file buffer is already an ArrayBuffer-like object
     const attachment = req.file.buffer;
@@ -64,6 +67,9 @@ router.post('/email/send-payslip', requireAuth, upload.single('file'), async (re
       recipientEmail: to,
       recipientWorkerNum: workerNum,
       recipientPayslipFile: filename,
+      batchId: batchId,
+      batchItemNum: batchItemNum,
+      batchSize: batchSize,
       date: date,
       timeSent: timeSent,
       subject: subject,

@@ -175,6 +175,9 @@ const sendPayslipToEmployee = async (email: string, workerNum: string, workerNam
   try {
     loadingStates.value[workerNum] = true;
 
+    // Generate a unique batch ID for this individual send operation
+    const batchId = new Date().getTime().toString();
+    
     const formData = new FormData();
     formData.append('to', email);
     formData.append('subject', emailSubject.value);
@@ -184,6 +187,11 @@ const sendPayslipToEmployee = async (email: string, workerNum: string, workerNam
     formData.append('workerName', workerName);
     formData.append('senderEmail', userEmail);
     formData.append('senderName', userName);
+    
+    // For individual sends, mark as batch size 1, with item number 1
+    formData.append('batchId', batchId);
+    formData.append('batchItemNum', '1');
+    formData.append('batchSize', '1');
 
     await sendPayslipEmail(formData);
     sentStates.value[workerNum] = true;
@@ -208,6 +216,15 @@ const sendAllPayslips = async () => {
       return;
     }
 
+    // Generate a unique batch ID for this send operation
+    const batchId = new Date().getTime().toString();
+    
+    // Count total selected payslips for batch size
+    const selectedCount = Object.values(selectedRows.value).filter(val => val).length;
+    
+    // Use index to track batch item number
+    let batchItemNum = 0;
+    
     const emailPromises = tableData.value.map(async row => {
       const workerNum = row['Worker No.'];
       const email = row['Email'];
@@ -216,6 +233,9 @@ const sendAllPayslips = async () => {
 
       if (selectedRows.value[workerNum] && payslip) {
         try {
+          // Increment batch item number for each selected payslip
+          batchItemNum++;
+          
           loadingStates.value[workerNum] = true;
 
           const formData = new FormData();
@@ -227,6 +247,9 @@ const sendAllPayslips = async () => {
           formData.append('workerName', workerName);
           formData.append('senderEmail', userEmail);
           formData.append('senderName', userName);
+          formData.append('batchId', batchId);
+          formData.append('batchItemNum', batchItemNum.toString()); 
+          formData.append('batchSize', selectedCount.toString());
 
           await sendPayslipEmail(formData);
           sentStates.value[workerNum] = true;
@@ -239,7 +262,7 @@ const sendAllPayslips = async () => {
     });
 
     await Promise.all(emailPromises);
-    console.log('Selected payslips sent successfully!');
+    console.log(`Batch ${batchId}: ${batchItemNum} payslips sent successfully!`);
     sendAllPayslipsDialog.value = false;
   } catch (error) {
     console.error('Error sending payslips:', error);
