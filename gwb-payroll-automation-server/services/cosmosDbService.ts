@@ -216,18 +216,12 @@ class CosmosDbService {
   }
 
   // TODO: Think about the limit here.
-  async getAllEmailLogs(limit: number = 100): Promise<EmailLog[]> {
+  async getAllEmailLogs(): Promise<EmailLog[]> {
     try {
       await this.ensureInitialized();
       
       const querySpec = {
-        query: 'SELECT * FROM c ORDER BY c._ts DESC OFFSET 0 LIMIT @limit',
-        parameters: [
-          {
-            name: '@limit',
-            value: limit
-          }
-        ]
+        query: 'SELECT * FROM c ORDER BY c._ts DESC',
       };
   
       const { resources } = await this.emailLogsContainer!.items.query(querySpec).fetchAll();
