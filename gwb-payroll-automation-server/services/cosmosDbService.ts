@@ -166,7 +166,7 @@ class CosmosDbService {
     } catch (error) {
       if ((error as any).code === 404) {
         // If the session doesn't exist, consider it already deleted
-        console.log(`Session ${sessionId} not found for deletion - already deleted or never existed`);
+        console.log(`Session ID not found.`);
         return;
       }
       console.error('Error deleting user session:', error);

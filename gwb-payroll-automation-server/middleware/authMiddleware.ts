@@ -46,7 +46,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     const userSession = await cosmosDbService.getUserSessionById(sessionId);
     
     if (!userSession) {
-      console.log(`Session ID ${sessionId} not found in database`);
+      console.log(`Session ID not found.`);
       // Clear the invalid cookie
       clearCookie(res, 'sessionId');
       return res.status(401).json({ error: 'Invalid session' });
@@ -54,7 +54,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     
     // Check if the session has expired
     if (userSession.expiresOn < Date.now()) {
-      console.log(`Session ID ${sessionId} has expired`);
+      console.log(`Session ID has expired.`);
       // Delete expired session from DB
       await cosmosDbService.deleteUserSession(sessionId);
       clearCookie(res, 'sessionId');

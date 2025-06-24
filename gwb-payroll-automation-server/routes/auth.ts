@@ -151,10 +151,8 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
     setCookie(res, 'sessionId', sessionId, cookieOptions);
 
     // For debugging, output what's happening
-    console.log(`Authentication successful for user: ${userData.displayName}`);
-    console.log(`Session ID ${sessionId} stored in Cosmos DB`);
-    console.log(`Redirecting to frontend: ${frontendOrigin}`);
-
+    console.log(`Authentication successful`);
+    
     // Redirect to the frontend without the token in URL
     res.redirect(frontendOrigin);
   } catch (error) {
