@@ -25,19 +25,20 @@ const isAuthenticated = ref(false);
 const emailLogs = ref<EmailLog[]>([]);
 const isLoading = ref(true);
 const headers = [
-    { title: 'Sender', value: 'senderName' },
-    { title: 'Recipient', value: 'recipientName' },
-    { title: 'Email', value: 'recipientEmail' },
-    { title: 'Worker No.', value: 'recipientWorkerNum' },
-    { title: 'Payslip File', value: 'recipientPayslipFile' },
-    { title: 'Batch ID', value: 'batchId' },
-    { title: 'Batch Size', value: 'batchSize' },
-    { title: 'Batch Item No.', value: 'batchItemNum'},
-    { title: 'Date', value: 'date' },
-    { title: 'Time Sent', value: 'timeSent' },
-    { title: 'Subject', value: 'subject' },
-    { title: 'Successful', value: 'successful' }
-]
+  { title: 'Successful', value: 'successful'},
+  { title: 'Sender', value: 'senderName', sortable: true},
+  { title: 'Recipient', value: 'recipientName', sortable: true },
+  { title: 'Email', value: 'recipientEmail', sortable: true },
+  { title: 'Worker No.', value: 'recipientWorkerNum', sortable: true },
+  { title: 'Payslip File', value: 'recipientPayslipFile' },
+  { title: 'Date', value: 'date', sortable: true },
+  { title: 'Time Sent', value: 'timeSent', sortable: true },
+  { title: 'Batch Size', value: 'batchSize' },
+  { title: 'Batch Item No.', value: 'batchItemNum' },
+  { title: 'Batch ID', value: 'batchId' },
+];
+
+const search = ref('');
 
 const fetchEmailLogs = async () => {
     await fetchAllPayslipLogs()
@@ -76,10 +77,18 @@ onMounted(async () => {
 
       <v-card>
         <v-card-text>
+          <v-text-field
+            v-model="search"
+            label="Search logs"
+            prepend-inner-icon="mdi-magnify"
+            class="mb-4"
+            clearable
+          />
           <v-data-table
             :headers="headers"
             :items="emailLogs"
             :loading="isLoading"
+            v-model:search="search"
             class="elevation-1"
             fixed-header
             height="600px"
@@ -98,4 +107,3 @@ onMounted(async () => {
       </v-card>
     </div>
   </template>
-  

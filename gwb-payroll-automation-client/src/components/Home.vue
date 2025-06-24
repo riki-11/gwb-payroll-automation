@@ -176,7 +176,7 @@ const sendPayslipToEmployee = async (email: string, workerNum: string, workerNam
     loadingStates.value[workerNum] = true;
 
     // Generate a unique batch ID for this individual send operation
-    const batchId = new Date().getTime().toString();
+    const batchId = new Date().getTime().toString() + '_' + '1';
     
     const formData = new FormData();
     formData.append('to', email);
@@ -216,14 +216,14 @@ const sendAllPayslips = async () => {
       return;
     }
 
-    // Generate a unique batch ID for this send operation
-    const batchId = new Date().getTime().toString();
-    
     // Count total selected payslips for batch size
     const selectedCount = Object.values(selectedRows.value).filter(val => val).length;
     
     // Use index to track batch item number
     let batchItemNum = 0;
+
+    // Generate a unique batch ID for this send operation
+    const batchId = new Date().getTime().toString() + '_' + batchItemNum;
     
     const emailPromises = tableData.value.map(async row => {
       const workerNum = row['Worker No.'];

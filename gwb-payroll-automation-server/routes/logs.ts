@@ -19,7 +19,7 @@ router.get('/logs/get-payslip-logs', requireAuth, async (req: Request, res: Resp
     }
     
     // Get all email logs using the service
-    const logs = await cosmosDbService.getAllEmailLogs(limit);
+    const logs = await cosmosDbService.getAllEmailLogs();
     
     // Return the logs
     return res.status(200).json(logs);
