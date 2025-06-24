@@ -1,4 +1,3 @@
-// gwb-payroll-automation-server/index.ts
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -21,30 +20,6 @@ const allowedOrigins = [
   process.env.FRONTEND_ORIGIN_LOCAL || "http://localhost:5173"
 ];
 
-// Custom middleware to parse cookies if cookie-parser is not available
-// TODO: determine if still needed
-const customCookieParser = (req: Request, res: Response, next: express.NextFunction) => {
-  if (req.cookies) {
-    // cookie-parser already did its job
-    return next();
-  }
-  
-  const cookies: Record<string, string> = {};
-  const cookieHeader = req.headers.cookie;
-  
-  if (cookieHeader) {
-    cookieHeader.split(';').forEach(cookie => {
-      const parts = cookie.split('=');
-      const key = parts[0].trim();
-      const value = parts.slice(1).join('=').trim();
-      cookies[key] = value;
-    });
-  }
-  
-  req.cookies = cookies;
-  next();
-};
-
 // Enable CORS for all routes based on environment
 app.use(cors({
   origin: (origin, callback) => {
@@ -64,14 +39,8 @@ app.use(cors({
   credentials: true // This is important for cookies
 }));
 
-// Try to use cookie-parser, and if it fails, use our custom parser
-try {
-  app.use(cookieParser());
-  console.log('Cookie parser middleware initialized');
-} catch (error) {
-  console.warn('Failed to initialize cookie-parser, using custom cookie parser:', error);
-  app.use(customCookieParser);
-}
+app.use(cookieParser());
+console.log('Cookie parser middleware initialized');
 
 // Parse JSON request bodies
 app.use(express.json());
@@ -100,18 +69,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Debug endpoint to check cookies
-// TODO: remove this route.
-app.get('/debug/cookies', (req, res) => {
-  res.status(200).json({
-    cookies: req.cookies || {},
-    hasCookieParser: typeof req.cookies !== 'undefined',
-    headers: {
-      cookie: req.headers.cookie,
-    }
-  });
-});
-
 // Schedule cleanup of expired sessions (run once per day)
 const scheduleSessionCleanup = () => {
   setInterval(async () => {
@@ -126,8 +83,6 @@ const scheduleSessionCleanup = () => {
 // Start the server
 const startServer = async () => {
   try {
-    console.log('Initializing Cosmos DB service...');
-    // Explicitly initialize Cosmos DB service
     await cosmosDbService.init();
     console.log('Cosmos DB service initialized successfully');
     
