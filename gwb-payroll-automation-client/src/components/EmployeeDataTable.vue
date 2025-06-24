@@ -132,6 +132,7 @@ watch(
       items-per-page="-1" 
       class="elevation-1"
       height="65vh"
+      fixed-header
       hide-default-footer
     >
       <template v-slot:headers>
