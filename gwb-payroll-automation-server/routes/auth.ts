@@ -1,9 +1,11 @@
+// gwb-payroll-automation-server/routes/auth.ts
 import express, { Request, Response } from 'express';
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import cosmosDbService from '../services/cosmosDbService';
 import { requireAuth } from '../middleware/authMiddleware';
+import { getSessionId, getUserInfo } from '../services/authService';
 import { UserSession } from '../models/UserSession';
 
 dotenv.config();
@@ -39,37 +41,18 @@ const cookieOptions = {
   maxAge: 24 * 60 * 60 * 1000, // 24 hours
   sameSite: isProduction ? 'none' : 'lax', // 'none' is required for cross-site cookies in secure contexts
   path: '/',
-  domain: isProduction ? process.env.COOKIE_DOMAIN || undefined : undefined, // Optional: set specific domain if needed
+  domain: isProduction ? undefined : undefined, // Let browser set domain automatically
 };
 
-// Helper function to set cookies that works in all environments
+// Helper function to set cookies
 const setCookie = (res: Response, name: string, value: string, options: any) => {
-  // Check if res.cookie function exists (standard Express)
   if (typeof res.cookie === 'function') {
     res.cookie(name, value, options);
   } else {
-    // Fallback for environments where res.cookie is not available (like some serverless)
-    const cookieValue = `${name}=${value}`;
-    const cookieParts = [cookieValue];
-    
-    if (options.httpOnly) cookieParts.push('HttpOnly');
-    if (options.secure) cookieParts.push('Secure');
-    if (options.maxAge) cookieParts.push(`Max-Age=${Math.floor(options.maxAge / 1000)}`);
-    if (options.path) cookieParts.push(`Path=${options.path}`);
-    
-    // For cross-origin cookies in secure contexts, SameSite=None is required
-    if (options.sameSite) {
-      cookieParts.push(`SameSite=${options.sameSite}`);
-    }
-    
-    if (options.domain) cookieParts.push(`Domain=${options.domain}`);
-    
-    const cookieString = cookieParts.join('; ');
-    res.setHeader('Set-Cookie', cookieString);
+    // Fallback for environments where res.cookie is not available
+    const cookieValue = `${name}=${value}; HttpOnly; ${options.secure ? 'Secure; ' : ''}Path=${options.path}; Max-Age=${options.maxAge / 1000}; SameSite=${options.sameSite}`;
+    res.setHeader('Set-Cookie', cookieValue);
   }
-  
-  // Debug cookie setting
-  console.log(`Setting cookie: ${name} with options:`, JSON.stringify(options));
 };
 
 // Helper function to clear cookies
@@ -78,13 +61,8 @@ const clearCookie = (res: Response, name: string) => {
     res.clearCookie(name);
   } else {
     // Expire the cookie immediately
-    setCookie(res, name, '', {
-      httpOnly: true,
-      secure: isProduction,
-      maxAge: 0,
-      path: '/',
-      sameSite: isProduction ? 'none' : 'lax',
-    });
+    const cookieValue = `${name}=; HttpOnly; ${isProduction ? 'Secure; ' : ''}Path=/; Max-Age=0; SameSite=${isProduction ? 'None' : 'Lax'}`;
+    res.setHeader('Set-Cookie', cookieValue);
   }
 };
 
@@ -150,10 +128,8 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
     // Set a session cookie using our helper function
     setCookie(res, 'sessionId', sessionId, cookieOptions);
 
-    // For debugging, output what's happening
-    console.log(`Authentication successful for user: ${userData.displayName}`);
-    console.log(`Session ID ${sessionId} stored in Cosmos DB`);
-    console.log(`Redirecting to frontend: ${frontendOrigin}`);
+    // For debugging, output what's happening (removed sessionId from logs for security)
+    console.log(`Authentication successful`);
 
     // Redirect to the frontend without the token in URL
     res.redirect(frontendOrigin);
@@ -166,10 +142,9 @@ router.get('/auth/callback', async (req: Request, res: Response) => {
 // Logout 
 router.get('/auth/logout', async (req: Request, res: Response) => {
   try {
-    // Get session ID from cookie
-    const sessionId = req.cookies?.sessionId;
+    // Get session ID from cookie and delete from database
+    const sessionId = getSessionId(req);
     
-    // If there's a session ID, delete it from the database
     if (sessionId) {
       await cosmosDbService.deleteUserSession(sessionId);
     }
@@ -189,15 +164,17 @@ router.get('/auth/logout', async (req: Request, res: Response) => {
 // Get current user details (protected route)
 router.get('/auth/get-current-user', requireAuth, async (req: Request, res: Response) => {
   try {
-    // The user is already set in the request object by the middleware
-    if (!req.user) {
+    // Use authService to get user info
+    const userInfo = await getUserInfo(req);
+    
+    if (!userInfo) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
     
     // Send back user info without exposing tokens
     res.json({
-      name: req.user.name,
-      email: req.user.email,
+      name: userInfo.name,
+      email: userInfo.email,
       isAuthenticated: true
     });
   } catch (error) {
@@ -209,27 +186,23 @@ router.get('/auth/get-current-user', requireAuth, async (req: Request, res: Resp
 // Check authentication status (public route)
 router.get('/auth/status', async (req: Request, res: Response) => {
   try {
-    // Get session ID from cookie
-    const sessionId = req.cookies?.sessionId;
+    // Use authService to check authentication
+    const userInfo = await getUserInfo(req);
     
-    if (!sessionId) {
-      return res.json({ isAuthenticated: false });
-    }
-    
-    // Find the session in Cosmos DB
-    const userSession = await cosmosDbService.getUserSessionById(sessionId);
-    
-    if (!userSession || userSession.expiresOn < Date.now()) {
-      // Clear invalid cookie
-      clearCookie(res, 'sessionId');
+    if (!userInfo) {
+      // Clear invalid cookie if present
+      const sessionId = getSessionId(req);
+      if (sessionId) {
+        clearCookie(res, 'sessionId');
+      }
       return res.json({ isAuthenticated: false });
     }
     
     // User is authenticated
     res.json({
       isAuthenticated: true,
-      name: userSession.name,
-      email: userSession.email
+      name: userInfo.name,
+      email: userInfo.email
     });
   } catch (error) {
     console.error('Error checking auth status:', error);
@@ -240,7 +213,7 @@ router.get('/auth/status', async (req: Request, res: Response) => {
 // Refresh token endpoint (protected route)
 router.post('/auth/refresh-token', requireAuth, async (req: Request, res: Response) => {
   try {
-    const sessionId = req.cookies?.sessionId;
+    const sessionId = getSessionId(req);
     if (!sessionId) {
       return res.status(401).json({ error: 'No session found' });
     }

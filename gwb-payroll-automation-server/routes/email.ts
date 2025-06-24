@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { requireAuth } from '../middleware/authMiddleware';
+import { getAccessToken, getUserInfo } from '../services/authService';
 import { sendEmailWithAttachment } from '../services/microsoftGraphService';
 import { EmailLog } from '../models/EmailLog';
 import multer from 'multer';
@@ -14,7 +15,15 @@ const upload = multer({ storage });
 // Send payslip email with attachment using Microsoft Graph API
 router.post('/email/send-payslip', requireAuth, upload.single('file'), async (req: Request, res: Response) => {
   try {
-    if (!req.user) {
+    // Use authService to get access token instead of req.user
+    const accessToken = await getAccessToken(req);
+    if (!accessToken) {
+      return res.status(401).json({ error: "Can't send email. No access token." });
+    }
+
+    // Get user info for logging purposes
+    const userInfo = await getUserInfo(req);
+    if (!userInfo) {
       return res.status(401).json({ error: "Can't send email. User not authenticated." });
     }
 
@@ -22,8 +31,7 @@ router.post('/email/send-payslip', requireAuth, upload.single('file'), async (re
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // TODO: Is there a more efficient way to type this?
-    const accessToken = req.user.accessToken;
+    // Extract request body parameters
     const to = req.body.to;
     const subject = req.body.subject;
     const html = req.body.html || '';
@@ -78,7 +86,6 @@ router.post('/email/send-payslip', requireAuth, upload.single('file'), async (re
 
     try {
       await cosmosDbService.createEmailLog(emailLog);
-      console.log('Email log created successfully:', emailLog);
     } catch (error) {
       console.error('Failed to create email log:', error);
     }
@@ -91,23 +98,12 @@ router.post('/email/send-payslip', requireAuth, upload.single('file'), async (re
     } else {
       res.status(500).json({ 
         success: false,
-        message: 'Failed to send email. Logged attempt.' 
+        message: 'Failed to send email. Logged attempt.'
       });
     }
-  } catch (error: any) {
-    console.error('Error sending payslip email:', error);
-
-    if (error.statusCode === 401) {
-      return res.status(401).json({
-        error: 'Authentication error',
-        message: 'Your session has expired or you don\'t have permission to send emails.'
-      });
-    }
-
-    return res.status(500).json({
-      error: 'Failed to send payslip email',
-      message: error.message || 'Unknown error occurred'
-    });
+  } catch (error) {
+    console.error('Error in send-payslip route:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

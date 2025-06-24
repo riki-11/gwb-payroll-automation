@@ -122,7 +122,6 @@ watch(
 </script>
 
 <template>
-  <!-- TODO: Upon confirming sending all payslips. Show loading indicators for all rows accordingly. -->
   <v-container class="d-flex flex-column align-start w-100">
     <h2>Attach Employee Payslips</h2>
     <p>Note: For bulk attachments, upload a zip below.</p>

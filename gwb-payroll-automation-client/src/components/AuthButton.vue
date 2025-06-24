@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { checkAuthStatus } from '../api/api'; // Import the API function
 import { useUserStore } from '../stores/userStore';
 
 const isLoggedIn = ref(false);
@@ -11,31 +11,23 @@ const isLoading = ref(true);
 const backendUrl = import.meta.env.VITE_API_BASE_URL;
 
 // Check user's authentication status
-const checkAuthStatus = async () => {
+const checkUserAuth = async () => {
   try {
     isLoading.value = true;
     
-    // Make a request to the auth status endpoint with credentials
-    // TODO: why is it axios herre instead of calling a function.
-    const response = await axios.get(`${backendUrl}/auth/status`, {
-      withCredentials: true // Important for sending cookies
-    });
+    const response = await checkAuthStatus();
     
-    // Also store user info in Pinia store
     const userStore = useUserStore();
 
     if (response.data.isAuthenticated) {
       isLoggedIn.value = true;
       userName.value = response.data.name;
       userEmail.value = response.data.email;
-
       userStore.setUserInfo(response.data.email, response.data.name);
-
     } else {
       isLoggedIn.value = false;
       userName.value = null;
       userEmail.value = null;
-
       userStore.clearUserInfo();
     }
   } catch (error) {
@@ -60,7 +52,7 @@ const authenticateLogout = () => {
 
 // Check auth status when component mounts
 onMounted(async () => {
-  await checkAuthStatus();
+  await checkUserAuth();
 });
 </script>
 
