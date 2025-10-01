@@ -15,10 +15,14 @@ export const createUserGraphClient = (accessToken: string) => {
  * Converts buffer to base64 string using Node.js Buffer
  */
 function bufferToBase64(buffer: Buffer | ArrayBuffer | Uint8Array): string {
-  // If buffer is ArrayBuffer or Uint8Array, convert to Buffer
-  const nodeBuffer = Buffer.isBuffer(buffer) 
-    ? buffer 
-    : Buffer.from(buffer);
+  let nodeBuffer: Buffer;
+  if (Buffer.isBuffer(buffer)) {
+    nodeBuffer = buffer;
+  } else if (buffer instanceof ArrayBuffer) {
+    nodeBuffer = Buffer.from(buffer);
+  } else { // Must be Uint8Array
+    nodeBuffer = Buffer.from(buffer);
+  }
   
   // Convert Buffer to base64 string
   return nodeBuffer.toString('base64');
