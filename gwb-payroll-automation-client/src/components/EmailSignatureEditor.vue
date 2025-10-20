@@ -101,6 +101,42 @@ watch(() => props.modelValue, (newValue) => {
 // Predefined signature templates with proper typing
 const signatureTemplates = ref<SignatureTemplate[]>([
   {
+    title: 'Finance UK (Scott)',
+    html: `<table style="width: 704px;">
+  <tbody>
+    <tr style="height: 21px;">
+      <td style="height: 21px; width: 500px;" rowspan="1">
+        <span style="font-family:helvetica; font-size:14px">
+          <b>
+          Scott Garson CA(SA)
+          </b>
+        </span>
+        <span style="font-family:helvetica; font-size:14px; color:#878787"> | Head of Finance</span>
+      </td>
+    </tr>
+    <tr style="height: 21px;">
+      <td style="height: 21px; width: 500px;">
+        <span style="font-family:helvetica; font-size:12px; color:#878787">
+        +44 203 903 8758 | www.gwbentertainment.com
+        <br />
+        GWB Entertainment UK Ltd | 11 Russell Gardens Mews, London W14 8EU, United Kingdom
+      </td>
+      </span>
+    </tr>
+    <tr style="height: 30px;">
+      <td style="height: 30px; width: 500px;" colspan="2">
+      <span style="font-family:helvetica; font-size:8px; color:#878787">
+      IMPORTANT: The contents of this email and any attachments are confidential. It is strictly
+      forbidden to share any part of this message with any third party, without a written consent
+      of the sender. If you received this message by mistake, please reply to this message and
+      follow with its deletion, so that we can ensure such a mistake does not occur in the future.
+      </span>
+      </td>
+    </tr>
+  </tbody>
+</table>`
+  },
+  {
     title: 'Angel of Music (Scott)',
     html: `<table cellpadding="0" cellspacing="0" style="font-family:Arial, sans-serif; font-size:13px; color:#000000; line-height:1.5;">
   <tbody>

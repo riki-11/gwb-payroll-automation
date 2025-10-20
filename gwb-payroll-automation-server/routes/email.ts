@@ -49,7 +49,7 @@ router.post('/email/send-payslip', requireAuth, upload.single('file'), async (re
 
     const now = new Date();
     const date = now.toISOString().split('T')[0]; // "YYYY-MM-DD"
-    const timeSent = now.toLocaleString(); 
+    const timeSent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     let success = false;
 
     try {
