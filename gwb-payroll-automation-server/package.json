@@ -37,6 +37,10 @@
     "typescript": "^5.7.3"
   },
   "resolutions": {
-    "@types/express": "4.17.21"
+    "@types/express": "4.17.21",
+    "@typespec/ts-http-runtime": "0.3.1"
+  },
+  "overrides": {
+    "@typespec/ts-http-runtime": "0.3.1"
   }
 }

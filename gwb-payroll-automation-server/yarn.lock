@@ -1545,7 +1545,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typespec/ts-http-runtime@npm:^0.3.0":
+"@typespec/ts-http-runtime@npm:0.3.1":
   version: 0.3.1
   resolution: "@typespec/ts-http-runtime@npm:0.3.1"
   dependencies:
