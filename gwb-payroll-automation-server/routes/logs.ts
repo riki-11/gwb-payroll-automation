@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.get('/logs/get-payslip-logs', requireAuth, async (req: Request, res: Response) => {
   try {
-    // Get limit parameter from query string, default to 100 if not provided
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+    // Get limit parameter from query string, default to 500 if not provided
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 500;
     
     // Validate limit parameter
     if (isNaN(limit) || limit <= 0) {
@@ -19,7 +19,7 @@ router.get('/logs/get-payslip-logs', requireAuth, async (req: Request, res: Resp
     }
     
     // Get all email logs using the service
-    const logs = await cosmosDbService.getAllEmailLogs();
+    const logs = await cosmosDbService.getAllEmailLogs(limit);
     
     // Return the logs
     return res.status(200).json(logs);
